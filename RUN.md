@@ -1,25 +1,20 @@
-# Run — Golf Bets (web)
-
-## Location
-
-- App: `RubisLabs/products/golf-bets/app`
-- Specs: `RubisLabs/products/golf-bets/spec`
+# Run — Golfbets (web)
 
 ## Prereqs
 
 - Node + npm installed
 
-## First-time setup
+## Clone
 
 ```bash
-cd ~/clawd/RubisLabs/products/golf-bets/app
+git clone https://github.com/shawncheatham/golfbets.git
+cd golfbets/app
 npm install
 ```
 
 ## Run (dev)
 
 ```bash
-cd ~/clawd/RubisLabs/products/golf-bets/app
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
@@ -32,12 +27,11 @@ Stop:
 ## Build (production)
 
 ```bash
-cd ~/clawd/RubisLabs/products/golf-bets/app
 npm run build
 ```
 
 Output:
-- `RubisLabs/products/golf-bets/app/dist/`
+- `app/dist/`
 
 ## Quick sanity test
 
@@ -47,4 +41,5 @@ Output:
 
 ## Notes
 
+- If you keep your projects under `~/RubisLabs/`, you can clone there; the repo does not require a specific parent directory.
 - When started via automation tools, the dev server may get killed (SIGKILL). Running it in your own terminal is the most reliable way.
