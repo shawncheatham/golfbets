@@ -318,6 +318,13 @@ export default function App() {
     })
   }
 
+  function lastCompletedHole(): number {
+    for (let h = 18; h >= 1; h--) {
+      if (isHoleComplete(h)) return h
+    }
+    return 0
+  }
+
   function settlementText(): string {
     if (!settlement) return ''
     const stake = stakeLabel(round.stakeCents || 0)
@@ -334,6 +341,45 @@ export default function App() {
       .join('\n')
 
     return `Skins settlement (${stake} per skin)\n\nNet:\n${totals}\n\nSuggested payments:\n${lines || '(no payments)'}`
+  }
+
+  function statusText(): string {
+    const through = lastCompletedHole()
+
+    if (round.game === 'skins' && skins) {
+      const stake = stakeLabel(round.stakeCents || 0)
+      const carry = skins.carryToNext
+
+      const standings = round.players
+        .map((p) => ({ name: p.name, skins: skins.skinsWon[p.id] || 0 }))
+        .sort((a, b) => b.skins - a.skins)
+        .map((x) => `- ${x.name}: ${x.skins}`)
+        .join('\n')
+
+      return `Golf Bets — Skins status\nRound: ${round.name || 'Skins'}\nStake: ${stake}/skin\nThrough: ${through}/18\nCarry: ${carry} skin(s)\n\nSkins won:\n${standings}`
+    }
+
+    if (round.game === 'wolf' && wolf) {
+      const pts = wolfLabel(round.wolfPointsPerHole)
+      const standings = round.players
+        .map((p) => ({ name: p.name, pts: wolf.pointsByPlayer[p.id] || 0 }))
+        .sort((a, b) => b.pts - a.pts)
+        .map((x) => `- ${x.name}: ${x.pts}`)
+        .join('\n')
+
+      return `Golf Bets — Wolf status\nRound: ${round.name || 'Wolf'}\nPoints: ${pts}\nThrough: ${through}/18\n\nPoints:\n${standings}`
+    }
+
+    return `Golf Bets status\nRound: ${round.name || 'Round'}\nThrough: ${through}/18`
+  }
+
+  async function copyStatus() {
+    try {
+      await navigator.clipboard.writeText(statusText())
+      alert('Copied status to clipboard')
+    } catch {
+      alert('Could not copy. You can manually select and copy the text.')
+    }
   }
 
   async function copySettlement() {
@@ -599,6 +645,9 @@ export default function App() {
                 </button>
                 <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
                   ← Setup
+                </button>
+                <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                  Share status
                 </button>
                 <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
                   {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
@@ -956,6 +1005,10 @@ export default function App() {
                 Next incomplete
               </button>
 
+              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                Share status
+              </button>
+
               <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
                 {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
               </button>
@@ -992,7 +1045,10 @@ export default function App() {
                 ← Back to holes
               </button>
               <button className="btn" onClick={copySettlement} type="button">
-                Copy
+                Copy settlement
+              </button>
+              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                Share status
               </button>
               <button className="btn ghost" onClick={resetSameGame} type="button">
                 New round
