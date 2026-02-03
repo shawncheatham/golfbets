@@ -501,15 +501,19 @@ export default function App() {
                   inputMode="numeric"
                   placeholder="1"
                 />
-                <div className="small">Wolf is 4 players only (v1). Best-ball match-play points per hole.</div>
+                <div className="small">Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.</div>
               </div>
             )}
           </div>
 
           <div style={{ height: 16 }} />
 
-          <div className="label">Players (2–4)</div>
-          <div className="small">{round.game === 'wolf' ? 'Wolf is 4 players only.' : 'Start with 2. Add up to 4.'}</div>
+          <div className="label">Players ({round.game === 'wolf' ? '4' : '2–4'})</div>
+          <div className="small">
+            {round.game === 'wolf'
+              ? 'Wolf is 4 players only (v1). Wolf rotates each hole. Partner is chosen per hole in Quick mode.'
+              : 'Start with 2. Add up to 4.'}
+          </div>
 
           <div className="row">
             {round.players.map((p, idx) => (
@@ -602,36 +606,94 @@ export default function App() {
             </div>
 
             <div className="holes">
-              <div className="holeGrid" style={{ minWidth: 720 }}>
-                <div className="holeRow header">
-                  <div className="holeCell">
-                    <span className="small">Hole</span>
-                  </div>
-                  {round.players.map((p) => (
-                    <div key={p.id} className="holeCell">
-                      <span className="small">{p.name}</span>
+              <div className="holeGrid" style={{ minWidth: round.game === 'wolf' ? 980 : 720 }}>
+                {round.game === 'wolf' ? (
+                  <>
+                    <div className="holeRow wolf header">
+                      <div className="holeCell">
+                        <span className="small">Hole</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Wolf</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Pairing</span>
+                      </div>
+                      {round.players.map((p) => (
+                        <div key={p.id} className="holeCell">
+                          <span className="small">{p.name}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => (
-                  <div key={hole} className="holeRow">
-                    <div className="holeCell">
-                      <span className="holeNum">{hole}</span>
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                      const wid = wolfForHole(round, hole as HoleNumber).wolfId
+                      const wolfName = round.players.find((p) => p.id === wid)?.name || 'Wolf'
+                      const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
+                      const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                      const pairingLabel = partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'
+
+                      return (
+                        <div key={hole} className="holeRow wolf">
+                          <div className="holeCell">
+                            <span className="holeNum">{hole}</span>
+                          </div>
+                          <div className="holeCell">
+                            <span className="small" style={{ fontWeight: 700 }}>
+                              {wolfName}
+                            </span>
+                          </div>
+                          <div className="holeCell">
+                            <span className="small">{pairingLabel}</span>
+                          </div>
+                          {round.players.map((p) => (
+                            <div key={p.id} className="holeCell">
+                              <input
+                                className="holeInput"
+                                value={round.strokesByHole[hole]?.[p.id] ?? ''}
+                                onChange={(e) => setStroke(hole, p.id, e.target.value)}
+                                inputMode="numeric"
+                                placeholder="-"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <div className="holeRow header">
+                      <div className="holeCell">
+                        <span className="small">Hole</span>
+                      </div>
+                      {round.players.map((p) => (
+                        <div key={p.id} className="holeCell">
+                          <span className="small">{p.name}</span>
+                        </div>
+                      ))}
                     </div>
-                    {round.players.map((p) => (
-                      <div key={p.id} className="holeCell">
-                        <input
-                          className="holeInput"
-                          value={round.strokesByHole[hole]?.[p.id] ?? ''}
-                          onChange={(e) => setStroke(hole, p.id, e.target.value)}
-                          inputMode="numeric"
-                          placeholder="-"
-                        />
+
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => (
+                      <div key={hole} className="holeRow">
+                        <div className="holeCell">
+                          <span className="holeNum">{hole}</span>
+                        </div>
+                        {round.players.map((p) => (
+                          <div key={p.id} className="holeCell">
+                            <input
+                              className="holeInput"
+                              value={round.strokesByHole[hole]?.[p.id] ?? ''}
+                              onChange={(e) => setStroke(hole, p.id, e.target.value)}
+                              inputMode="numeric"
+                              placeholder="-"
+                            />
+                          </div>
+                        ))}
                       </div>
                     ))}
-                  </div>
-                ))}
+                  </>
+                )}
               </div>
             </div>
 
@@ -713,6 +775,15 @@ export default function App() {
               {round.game === 'wolf' && wolfHole && (
                 <div className="small">
                   Hole {quickHole}: Wolf = {round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'}
+                  {(() => {
+                    const partnerId = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) as PlayerId | null
+                    const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                    return (
+                      <>
+                        {' • '}Pairing: {partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'}
+                      </>
+                    )
+                  })()}
                 </div>
               )}
             </div>
@@ -761,7 +832,7 @@ export default function App() {
 
           {round.game === 'wolf' && wolfHole && (
             <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
-              <div className="label">Wolf partner (for this hole)</div>
+              <div className="label">Pick partner for this hole</div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                 {round.players
                   .filter((p) => p.id !== wolfHole.wolfId)
@@ -794,7 +865,7 @@ export default function App() {
                   )
                 })()}
               </div>
-              <div className="small">If you don’t pick a partner, it counts as Lone Wolf.</div>
+              <div className="small">1) Confirm the Wolf above. 2) Tap a partner (or Lone). 3) Enter scores. This pairing is saved per hole.</div>
             </div>
           )}
 
