@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+type Theme = 'dark' | 'light'
 import './App.css'
 import type { Player, PlayerId, Round } from './types'
 import { computeSkins, stakeLabel } from './logic/skins'
@@ -6,6 +8,28 @@ import { computeSettlement } from './logic/settlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 
 type Screen = 'setup' | 'holes' | 'quick' | 'settlement'
+
+const THEME_KEY = 'rubislabs:golf-bets:theme:v1'
+
+function loadTheme(): Theme {
+  try {
+    const raw = localStorage.getItem(THEME_KEY)
+    if (raw === 'light' || raw === 'dark') return raw
+  } catch {
+    // ignore
+  }
+  // default: dark (matches current design)
+  return 'dark'
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme
+  try {
+    localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    // ignore
+  }
+}
 
 function uid(prefix = 'id') {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`
@@ -40,6 +64,11 @@ function createEmptyRound(): Round {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('setup')
+  const [theme, setTheme] = useState<Theme>(() => loadTheme())
+
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
 
   // Local persistence
   const [stored, setStored] = useState(() => loadRounds())
@@ -76,10 +105,14 @@ export default function App() {
     }))
   }
 
+  const focusPlayerId = useRef<PlayerId | null>(null)
+
   function addPlayer() {
     setRound((r) => {
       if (r.players.length >= 4) return r
-      return { ...r, players: [...r.players, { id: uid('p'), name: `Player ${r.players.length + 1}` }] }
+      const id = uid('p')
+      focusPlayerId.current = id
+      return { ...r, players: [...r.players, { id, name: `Player ${r.players.length + 1}` }] }
     })
   }
 
@@ -87,6 +120,8 @@ export default function App() {
     setRound((r) => {
       if (r.players.length <= 2) return r
       const players = r.players.filter((p) => p.id !== id)
+      // If we removed the focused player, clear.
+      if (focusPlayerId.current === id) focusPlayerId.current = null
       const strokesByHole: Round['strokesByHole'] = {}
       for (const [holeStr, byPlayer] of Object.entries(r.strokesByHole)) {
         const hole = Number(holeStr)
@@ -227,7 +262,17 @@ export default function App() {
           <h1>Golf Bets</h1>
           <span>Skins (web prototype) — money-adjacent</span>
         </div>
-        <div className="pill">{stakeLabel(round.stakeCents)} per skin</div>
+
+        <div className="headerRight">
+          <div className="pill">{stakeLabel(round.stakeCents)} per skin</div>
+          <button
+            className="btn ghost iconBtn"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
+        </div>
       </div>
 
       {screen === 'setup' && (
@@ -258,12 +303,21 @@ export default function App() {
           <div style={{ height: 16 }} />
 
           <div className="label">Players (2–4)</div>
+          <div className="small">Start with 2. Add up to 4.</div>
           <div className="row">
             {round.players.map((p, idx) => (
               <div key={p.id} className="row two">
                 <div>
                   <input
                     className="input"
+                    ref={(el) => {
+                      if (!el) return
+                      if (focusPlayerId.current && focusPlayerId.current === p.id) {
+                        // focus on next paint
+                        queueMicrotask(() => el.focus())
+                        focusPlayerId.current = null
+                      }
+                    }}
                     value={p.name}
                     onChange={(e) => updatePlayer(p.id, { name: e.target.value })}
                     placeholder={`Player ${idx + 1}`}
@@ -289,7 +343,7 @@ export default function App() {
               <button className="btn ghost" disabled={!canStart} onClick={() => setScreen('holes')}>
                 Grid view
               </button>
-              <button className="btn danger" onClick={reset}>
+              <button className="btn ghost" onClick={reset}>
                 New round
               </button>
             </div>
@@ -526,35 +580,51 @@ export default function App() {
                   <div>
                     <div style={{ fontWeight: 800 }}>{p.name}</div>
                   </div>
-                  <div className="stepper">
-                    <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked}>
-                      −
-                    </button>
-                    <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
-                    <button
-                      className="stepBtn"
-                      onClick={() => {
-                        incStroke(quickHole, p.id, +1)
-                        // If this completes the hole, auto-advance to next incomplete.
-                        // Use a microtask so state updates apply first.
-                        queueMicrotask(() => {
-                          // Find next incomplete starting from current hole
-                          for (let h = quickHole; h <= 18; h++) {
-                            if (!isHoleComplete(h)) return
-                          }
-                          // current and all later holes complete; jump to next incomplete (wrap)
-                          for (let h = 1; h <= quickHole; h++) {
-                            if (!isHoleComplete(h)) {
-                              setQuickHole(h)
-                              return
+                  <div className="quickScore">
+                    <div className="chipRow" aria-label={`${p.name} quick score buttons`}>
+                      {[3, 4, 5, 6, 7].map((n) => (
+                        <button
+                          key={n}
+                          className={`chip ${val === n ? 'active' : ''}`}
+                          onClick={() => setStroke(quickHole, p.id, String(n))}
+                          disabled={!!round.locked}
+                          title={`Set ${p.name} to ${n}`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="stepper">
+                      <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked}>
+                        −
+                      </button>
+                      <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
+                      <button
+                        className="stepBtn"
+                        onClick={() => {
+                          incStroke(quickHole, p.id, +1)
+                          // If this completes the hole, auto-advance to next incomplete.
+                          // Use a microtask so state updates apply first.
+                          queueMicrotask(() => {
+                            // Find next incomplete starting from current hole
+                            for (let h = quickHole; h <= 18; h++) {
+                              if (!isHoleComplete(h)) return
                             }
-                          }
-                        })
-                      }}
-                      disabled={!!round.locked}
-                    >
-                      +
-                    </button>
+                            // current and all later holes complete; jump to next incomplete (wrap)
+                            for (let h = 1; h <= quickHole; h++) {
+                              if (!isHoleComplete(h)) {
+                                setQuickHole(h)
+                                return
+                              }
+                            }
+                          })
+                        }}
+                        disabled={!!round.locked}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                   <button
                     className="btn ghost"
