@@ -1,0 +1,267 @@
+:root {
+  --bg: #0b0f14;
+  --panel: #121926;
+  --text: #e6edf3;
+  --muted: #9fb0c0;
+  --accent: #66e3a4;
+  --danger: #ff6b6b;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 800px at 20% 0%, #182235 0%, var(--bg) 50%) fixed;
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+a { color: inherit; }
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand h1 {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.brand span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.card {
+  background: rgba(18, 25, 38, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 740px) {
+  .row.two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(8, 12, 18, 0.65);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(102, 227, 164, 0.15);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: rgba(102, 227, 164, 0.22);
+  border-color: rgba(102, 227, 164, 0.35);
+}
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.btn.danger {
+  background: rgba(255, 107, 107, 0.16);
+  border-color: rgba(255, 107, 107, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 14px;
+}
+
+.table th { color: var(--muted); font-weight: 600; }
+
+.small { color: var(--muted); font-size: 12px; }
+
+.holes {
+  overflow-x: auto;
+}
+
+.holeGrid {
+  min-width: 720px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.holeRow {
+  display: grid;
+  grid-template-columns: 64px repeat(4, 1fr);
+}
+
+.holeRow.header {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.holeCell {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.holeCell:last-child { border-right: none; }
+
+.holeNum {
+  font-weight: 700;
+}
+
+.holeInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(8, 12, 18, 0.65);
+  color: var(--text);
+  font-size: 16px;
+  text-align: center;
+}
+
+.positive { color: var(--accent); }
+.negative { color: var(--danger); }
+
+.footerActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.quickTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.holePicker {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.bigNum {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.incRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.incRow:last-child { border-bottom: none; }
+
+.stepper {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.stepBtn {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stepBtn:disabled { opacity: 0.35; }
+
+.stepVal {
+  width: 54px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle input {
+  width: 18px;
+  height: 18px;
+}
