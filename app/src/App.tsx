@@ -382,12 +382,28 @@ export default function App() {
     }
   }
 
+  function isRoundComplete(): boolean {
+    for (let h = 1; h <= 18; h++) {
+      if (!isHoleComplete(h)) return false
+    }
+    return true
+  }
+
   async function copySettlement() {
     try {
       await navigator.clipboard.writeText(settlementText())
       alert('Copied settlement to clipboard')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
+    }
+  }
+
+  async function shareSettlement() {
+    try {
+      await navigator.clipboard.writeText(settlementText())
+      alert('Copied settlement (ready to paste in the group chat)')
+    } catch {
+      alert('Could not copy. You can manually select and copy the settlement text.')
     }
   }
 
@@ -649,6 +665,11 @@ export default function App() {
                 <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
                   Share status
                 </button>
+                {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
+                  <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                    Share settlement
+                  </button>
+                )}
                 <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
                   {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
                 </button>
@@ -1009,6 +1030,12 @@ export default function App() {
                 Share status
               </button>
 
+              {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
+                <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                  Share settlement
+                </button>
+              )}
+
               <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
                 {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
               </button>
@@ -1046,6 +1073,9 @@ export default function App() {
               </button>
               <button className="btn" onClick={copySettlement} type="button">
                 Copy settlement
+              </button>
+              <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                Share settlement
               </button>
               <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
                 Share status
