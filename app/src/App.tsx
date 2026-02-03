@@ -32,8 +32,6 @@ function createEmptyRound(): Round {
     players: [
       { id: uid('p'), name: 'Player 1' },
       { id: uid('p'), name: 'Player 2' },
-      { id: uid('p'), name: 'Player 3' },
-      { id: uid('p'), name: 'Player 4' },
     ],
     strokesByHole: {},
     createdAt: Date.now(),
@@ -229,7 +227,7 @@ export default function App() {
           <h1>Golf Bets</h1>
           <span>Skins (web prototype) — money-adjacent</span>
         </div>
-        <div className="pill">{stakeLabel(round.stakeCents)} / skin</div>
+        <div className="pill">{stakeLabel(round.stakeCents)} per skin</div>
       </div>
 
       {screen === 'setup' && (
@@ -245,7 +243,7 @@ export default function App() {
               />
             </div>
             <div>
-              <div className="label">Stake per skin ($)</div>
+              <div className="label">Stake ($/skin)</div>
               <input
                 className="input"
                 value={dollarsStringFromCents(round.stakeCents)}
@@ -271,11 +269,12 @@ export default function App() {
                     placeholder={`Player ${idx + 1}`}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <button className="btn ghost" onClick={() => removePlayer(p.id)} disabled={round.players.length <= 2}>
-                    Remove
-                  </button>
-                  <div className="small">Player {idx + 1}</div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
+                  {round.players.length > 2 && (
+                    <button className="btn ghost" onClick={() => removePlayer(p.id)}>
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
