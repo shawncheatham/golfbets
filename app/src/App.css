@@ -71,6 +71,18 @@ a { color: inherit; }
   font-size: 13px;
 }
 
+.tagline {
+  color: var(--text);
+  opacity: 0.92;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.subbrand {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--border);

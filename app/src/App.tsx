@@ -369,7 +369,8 @@ export default function App() {
       <div className="header">
         <div className="brand">
           <h1>Golf Bets</h1>
-          <span>{round.game === 'wolf' ? 'Wolf (web prototype) — points' : 'Skins (web prototype) — money-adjacent'}</span>
+          <span className="tagline">Less math, fewer arguments.</span>
+          <span className="subbrand">{round.game === 'wolf' ? 'Wolf — points' : 'Skins — money-adjacent'}</span>
         </div>
 
         <div className="headerRight">
