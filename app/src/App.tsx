@@ -408,8 +408,13 @@ export default function App() {
   }
 
   function headerPill() {
-    if (round.game === 'wolf') return wolfLabel(round.wolfPointsPerHole)
-    return `${stakeLabel(round.stakeCents || 0)} per skin`
+    const through = lastCompletedHole()
+    const progress = through > 0 ? `Through ${through}/18` : 'Through 0/18'
+
+    if (round.game === 'wolf') {
+      return `${wolfLabel(round.wolfPointsPerHole)} • ${progress}`
+    }
+    return `${stakeLabel(round.stakeCents || 0)} per skin • ${progress}`
   }
 
   function setWolfPartnerForHole(hole: HoleNumber, partnerId: PlayerId | null) {
@@ -432,7 +437,7 @@ export default function App() {
         <div className="brand">
           <h1>Golf Bets</h1>
           <span className="tagline">Less math, fewer arguments.</span>
-          <span className="subbrand">{round.game === 'wolf' ? 'Wolf — points' : 'Skins — money-adjacent'}</span>
+          <span className="subbrand" aria-hidden="true"></span>
         </div>
 
         <div className="headerRight">

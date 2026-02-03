@@ -79,8 +79,7 @@ a { color: inherit; }
 }
 
 .subbrand {
-  color: var(--muted);
-  font-size: 12px;
+  display: none;
 }
 
 .card {
