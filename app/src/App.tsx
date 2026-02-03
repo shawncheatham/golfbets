@@ -48,10 +48,54 @@ function dollarsStringFromCents(cents: number): string {
   return d % 1 === 0 ? `${d.toFixed(0)}` : `${d.toFixed(2)}`
 }
 
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function randomRoundName(): string {
+  // A little funny/rowdy, but still "golf tournament" flavored.
+  const adjectives = [
+    'Back Nine',
+    'Cart Path',
+    'Breakfast Ball',
+    'Mulligan',
+    'Sand Trap',
+    'Fairway',
+    'Range Rat',
+    'Caddie Shack',
+    'Turn Dog',
+    'Sunset',
+    'Birdie Juice',
+    'Wedge Wizard',
+    'Short Game',
+    'Greenside',
+    'Dad Golf',
+  ]
+
+  const nouns = [
+    'Open',
+    'Invitational',
+    'Classic',
+    'Cup',
+    'Championship',
+    'Scramble',
+    'Showdown',
+    'Shootout',
+    'Rumble',
+    'Skins Game',
+  ]
+
+  const suffixes = ['(No Gimmes)', '(All Gimmes)', '(Low Drama)', '(High Drama)', '(Respectfully)', '(Allegedly)']
+
+  const base = `${pick(adjectives)} ${pick(nouns)}`
+  // Keep it playful but not always noisy.
+  return Math.random() < 0.35 ? `${base} ${pick(suffixes)}` : base
+}
+
 function createEmptyRound(): Round {
   return {
     id: uid('round'),
-    name: 'Skins',
+    name: randomRoundName(),
     stakeCents: 500,
     players: [
       { id: uid('p'), name: 'Player 1' },
@@ -279,7 +323,17 @@ export default function App() {
         <div className="card">
           <div className="row two">
             <div>
-              <div className="label">Round name</div>
+              <div className="labelRow">
+                <div className="label">Round name</div>
+                <button
+                  className="btn ghost iconBtn"
+                  type="button"
+                  onClick={() => setRound((r) => ({ ...r, name: randomRoundName() }))}
+                  title="Reroll name"
+                >
+                  🎲 Reroll
+                </button>
+              </div>
               <input
                 className="input"
                 value={round.name}
