@@ -234,44 +234,6 @@ export default function App() {
 
       {screen === 'setup' && (
         <div className="card">
-          {stored.rounds.length > 0 && (
-            <>
-              <div className="label">Recent rounds</div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Players</th>
-                    <th style={{ textAlign: 'right' }}>Stake</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stored.rounds
-                    .slice()
-                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-                    .slice(0, 8)
-                    .map((r) => (
-                      <tr key={r.id}>
-                        <td>{r.name || 'Skins'}</td>
-                        <td className="small">{r.players.map((p) => p.name).join(', ')}</td>
-                        <td style={{ textAlign: 'right' }}>{stakeLabel(r.stakeCents)}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button className="btn ghost" onClick={() => loadExistingRound(r)}>
-                            Open
-                          </button>{' '}
-                          <button className="btn danger" onClick={() => deleteExistingRound(r.id)}>
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-              <div style={{ height: 16 }} />
-            </>
-          )}
-
           <div className="row two">
             <div>
               <div className="label">Round name</div>
@@ -333,6 +295,44 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {stored.rounds.length > 0 && (
+            <>
+              <div style={{ height: 18 }} />
+              <div className="label">Recent rounds</div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Players</th>
+                    <th style={{ textAlign: 'right' }}>Stake</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stored.rounds
+                    .slice()
+                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                    .slice(0, 8)
+                    .map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.name || 'Skins'}</td>
+                        <td className="small">{r.players.map((p) => p.name).join(', ')}</td>
+                        <td style={{ textAlign: 'right' }}>{stakeLabel(r.stakeCents)}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button className="btn ghost" onClick={() => loadExistingRound(r)}>
+                            Open
+                          </button>{' '}
+                          <button className="btn danger" onClick={() => deleteExistingRound(r.id)}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </div>
       )}
 
@@ -352,7 +352,7 @@ export default function App() {
                     checked={!!round.locked}
                     onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
                   />
-                  Lock
+                  Lock round
                 </label>
                 <button className="btn ghost" onClick={() => setScreen('quick')}>
                   Quick mode
@@ -445,7 +445,6 @@ export default function App() {
         <div className="card">
           <div className="quickTop">
             <div>
-              <div className="label">Quick entry</div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Skins'}</div>
               <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>
             </div>
@@ -456,12 +455,16 @@ export default function App() {
                   checked={!!round.locked}
                   onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
                 />
-                Lock
+                Lock round
               </label>
               <div className="holePicker">
-                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
-                  ←
-                </button>
+                {quickHole > 1 ? (
+                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
+                    ←
+                  </button>
+                ) : (
+                  <span style={{ width: 44 }} />
+                )}
                 <select
                   className="input"
                   style={{ width: 110, padding: '10px 10px', fontWeight: 800 }}
@@ -474,15 +477,16 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.min(18, h + 1))}>
-                  →
-                </button>
+                {quickHole < 18 ? (
+                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.min(18, h + 1))}>
+                    →
+                  </button>
+                ) : (
+                  <span style={{ width: 44 }} />
+                )}
               </div>
               <button className="btn ghost" onClick={() => setScreen('holes')}>
                 Grid
-              </button>
-              <button className="btn primary" onClick={() => setScreen('settlement')}>
-                Settlement →
               </button>
             </div>
           </div>
@@ -522,7 +526,6 @@ export default function App() {
                 <div key={p.id} className="incRow">
                   <div>
                     <div style={{ fontWeight: 800 }}>{p.name}</div>
-                    <div className="small">Hole {quickHole} {isHoleComplete(quickHole) ? '· complete' : '· in progress'}</div>
                   </div>
                   <div className="stepper">
                     <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked}>
@@ -567,18 +570,27 @@ export default function App() {
             })}
 
             <div className="footerActions">
-              <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
-                Prev hole
-              </button>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  const next = Math.min(18, quickHole + 1)
-                  setQuickHole(next)
-                }}
-              >
-                Next hole
-              </button>
+              {quickHole > 1 ? (
+                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
+                  Prev hole
+                </button>
+              ) : (
+                <span />
+              )}
+
+              {quickHole < 18 ? (
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    const next = Math.min(18, quickHole + 1)
+                    setQuickHole(next)
+                  }}
+                >
+                  Next hole
+                </button>
+              ) : (
+                <span />
+              )}
               <button
                 className="btn"
                 onClick={() => {
@@ -601,6 +613,11 @@ export default function App() {
               >
                 Next incomplete
               </button>
+
+              <button className="btn primary" onClick={() => setScreen('settlement')}>
+                Settlement →
+              </button>
+
               <button className="btn ghost" onClick={() => setScreen('setup')}>
                 Setup
               </button>
@@ -624,7 +641,7 @@ export default function App() {
                   checked={!!round.locked}
                   onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
                 />
-                Lock
+                Lock round
               </label>
               <button className="btn ghost" onClick={() => setScreen('quick')}>
                 Quick mode
