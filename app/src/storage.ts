@@ -14,9 +14,32 @@ export function loadRounds(): StoredRounds {
     if (!raw) return { rounds: [] };
     const parsed = JSON.parse(raw) as StoredRounds;
     if (!parsed || !Array.isArray(parsed.rounds)) return { rounds: [] };
+
+    // Lightweight migration for older stored rounds.
+    const rounds = parsed.rounds.map((r: any) => {
+      if (!r || typeof r !== 'object') return r;
+      if (!r.game) {
+        // legacy = skins
+        return { ...r, game: 'skins', stakeCents: typeof r.stakeCents === 'number' ? r.stakeCents : 500 };
+      }
+      if (r.game === 'skins') {
+        return { ...r, stakeCents: typeof r.stakeCents === 'number' ? r.stakeCents : 500 };
+      }
+      if (r.game === 'wolf') {
+        return {
+          ...r,
+          wolfPointsPerHole: typeof r.wolfPointsPerHole === 'number' ? r.wolfPointsPerHole : 1,
+          wolfLoneMultiplier: typeof r.wolfLoneMultiplier === 'number' ? r.wolfLoneMultiplier : 2,
+          wolfStartingIndex: typeof r.wolfStartingIndex === 'number' ? r.wolfStartingIndex : 0,
+          wolfPartnerByHole: r.wolfPartnerByHole && typeof r.wolfPartnerByHole === 'object' ? r.wolfPartnerByHole : {},
+        };
+      }
+      return r;
+    });
+
     return {
       activeRoundId: parsed.activeRoundId,
-      rounds: parsed.rounds,
+      rounds,
     };
   } catch {
     return { rounds: [] };

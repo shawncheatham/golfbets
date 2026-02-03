@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
-import type { Player, PlayerId, Round } from './types'
+import type { GameType, HoleNumber, Player, PlayerId, Round } from './types'
 import { computeSkins, stakeLabel } from './logic/skins'
 import { computeSettlement } from './logic/settlement'
+import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 
-type Screen = 'setup' | 'holes' | 'quick' | 'settlement'
+type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
 const THEME_KEY = 'rubislabs:golf-bets:theme:v1'
 
@@ -52,7 +53,7 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-function randomRoundName(): string {
+function randomSkinsName(): string {
   // A little funny/rowdy, but still "golf tournament" flavored.
   const adjectives = [
     'Back Nine',
@@ -72,18 +73,7 @@ function randomRoundName(): string {
     'Dad Golf',
   ]
 
-  const nouns = [
-    'Open',
-    'Invitational',
-    'Classic',
-    'Cup',
-    'Championship',
-    'Scramble',
-    'Showdown',
-    'Shootout',
-    'Rumble',
-    'Skins Game',
-  ]
+  const nouns = ['Open', 'Invitational', 'Classic', 'Cup', 'Championship', 'Showdown', 'Shootout', 'Rumble', 'Skins Game']
 
   const suffixes = ['(No Gimmes)', '(All Gimmes)', '(Low Drama)', '(High Drama)', '(Respectfully)', '(Allegedly)']
 
@@ -92,10 +82,20 @@ function randomRoundName(): string {
   return Math.random() < 0.35 ? `${base} ${pick(suffixes)}` : base
 }
 
-function createEmptyRound(): Round {
+function randomWolfName(): string {
+  const adjectives = ['Wolf', 'Lone Wolf', 'Pack', 'Cart Path', 'Trash Talk', 'Breakfast Ball', 'Wedge Wizard', 'Birdie Juice', 'Back Nine']
+  const nouns = ['Classic', 'Open', 'Invitational', 'Showdown', 'Shootout', 'Rumble']
+  const suffixes = ['(No Mercy)', '(Respectfully)', '(Allegedly)', '(No Gimmes)']
+
+  const base = `${pick(adjectives)} ${pick(nouns)}`
+  return Math.random() < 0.35 ? `${base} ${pick(suffixes)}` : base
+}
+
+function createEmptySkinsRound(): Round {
   return {
     id: uid('round'),
-    name: randomRoundName(),
+    game: 'skins',
+    name: randomSkinsName(),
     stakeCents: 500,
     players: [
       { id: uid('p'), name: 'Player 1' },
@@ -106,8 +106,28 @@ function createEmptyRound(): Round {
   }
 }
 
+function createEmptyWolfRound(): Round {
+  return {
+    id: uid('round'),
+    game: 'wolf',
+    name: randomWolfName(),
+    wolfPointsPerHole: 1,
+    wolfLoneMultiplier: 2,
+    wolfStartingIndex: 0,
+    wolfPartnerByHole: {},
+    players: [
+      { id: uid('p'), name: 'Player 1' },
+      { id: uid('p'), name: 'Player 2' },
+      { id: uid('p'), name: 'Player 3' },
+      { id: uid('p'), name: 'Player 4' },
+    ],
+    strokesByHole: {},
+    createdAt: Date.now(),
+  }
+}
+
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('setup')
+  const [screen, setScreen] = useState<Screen>('game')
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
 
   useEffect(() => {
@@ -119,7 +139,8 @@ export default function App() {
   const [round, setRound] = useState<Round>(() => {
     const st = loadRounds()
     const active = st.activeRoundId ? st.rounds.find((r) => r.id === st.activeRoundId) : undefined
-    return active || createEmptyRound()
+    // If there is an active round, resume it, but keep landing page available.
+    return active || createEmptySkinsRound()
   })
 
   // Avoid writing on initial mount before state settles
@@ -136,11 +157,21 @@ export default function App() {
     })
   }, [round])
 
-  const skins = useMemo(() => computeSkins(round), [round])
-  const settlement = useMemo(() => computeSettlement(round), [round])
+  const skins = useMemo(() => (round.game === 'skins' ? computeSkins(round) : null), [round])
+  const settlement = useMemo(() => (round.game === 'skins' ? computeSettlement(round) : null), [round])
+  const wolf = useMemo(() => (round.game === 'wolf' ? computeWolf(round) : null), [round])
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
-  const canStart = allPlayersHaveNames && round.players.length >= 2 && round.players.length <= 4 && round.stakeCents > 0
+
+  const canStart = useMemo(() => {
+    if (!allPlayersHaveNames) return false
+    if (round.game === 'skins') {
+      return round.players.length >= 2 && round.players.length <= 4 && (round.stakeCents || 0) > 0
+    }
+    // wolf v1: 4 only
+    const pts = round.wolfPointsPerHole || 0
+    return round.players.length === 4 && pts > 0
+  }, [allPlayersHaveNames, round])
 
   function updatePlayer(id: PlayerId, patch: Partial<Player>) {
     setRound((r) => ({
@@ -153,6 +184,7 @@ export default function App() {
 
   function addPlayer() {
     setRound((r) => {
+      if (r.game === 'wolf') return r
       if (r.players.length >= 4) return r
       const id = uid('p')
       focusPlayerId.current = id
@@ -162,6 +194,7 @@ export default function App() {
 
   function removePlayer(id: PlayerId) {
     setRound((r) => {
+      if (r.game === 'wolf') return r
       if (r.players.length <= 2) return r
       const players = r.players.filter((p) => p.id !== id)
       // If we removed the focused player, clear.
@@ -246,11 +279,23 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen])
 
-  function reset() {
+  function resetToGamePicker() {
+    if (!confirm('Start a new game? This will clear the current round on screen (saved rounds remain in Recent).')) {
+      return
+    }
+    setScreen('game')
+  }
+
+  function resetSameGame() {
     if (!confirm('Start a new round? This will clear the current round on screen (saved rounds remain in Recent).')) {
       return
     }
-    setRound(createEmptyRound())
+    setRound(round.game === 'wolf' ? createEmptyWolfRound() : createEmptySkinsRound())
+    setScreen('setup')
+  }
+
+  function startNew(game: GameType) {
+    setRound(game === 'wolf' ? createEmptyWolfRound() : createEmptySkinsRound())
     setScreen('setup')
   }
 
@@ -274,7 +319,8 @@ export default function App() {
   }
 
   function settlementText(): string {
-    const stake = stakeLabel(round.stakeCents)
+    if (!settlement) return ''
+    const stake = stakeLabel(round.stakeCents || 0)
     const lines = settlement.lines
       .map((l) => `${l.from.name} pays ${l.to.name} $${(l.amountCents / 100).toFixed(2)}`)
       .join('\n')
@@ -299,108 +345,56 @@ export default function App() {
     }
   }
 
+  function headerPill() {
+    if (round.game === 'wolf') return wolfLabel(round.wolfPointsPerHole)
+    return `${stakeLabel(round.stakeCents || 0)} per skin`
+  }
+
+  function setWolfPartnerForHole(hole: HoleNumber, partnerId: PlayerId | null) {
+    if (round.locked) return
+    setRound((r) => {
+      if (r.game !== 'wolf') return r
+      const cur = r.wolfPartnerByHole || {}
+      return { ...r, wolfPartnerByHole: { ...cur, [hole]: partnerId } }
+    })
+  }
+
+  const wolfHole = useMemo(() => {
+    if (round.game !== 'wolf') return null
+    return wolfForHole(round, quickHole as HoleNumber)
+  }, [round, quickHole])
+
   return (
     <div className="container">
       <div className="header">
         <div className="brand">
           <h1>Golf Bets</h1>
-          <span>Skins (web prototype) — money-adjacent</span>
+          <span>{round.game === 'wolf' ? 'Wolf (web prototype) — points' : 'Skins (web prototype) — money-adjacent'}</span>
         </div>
 
         <div className="headerRight">
-          <div className="pill">{stakeLabel(round.stakeCents)} per skin</div>
+          <div className="pill">{headerPill()}</div>
           <button
             className="btn ghost iconBtn"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            type="button"
           >
             {theme === 'dark' ? 'Light' : 'Dark'}
           </button>
         </div>
       </div>
 
-      {screen === 'setup' && (
+      {screen === 'game' && (
         <div className="card">
+          <div className="label">Choose a game</div>
           <div className="row two">
-            <div>
-              <div className="labelRow">
-                <div className="label">Round name</div>
-                <button
-                  className="btn ghost iconBtn"
-                  type="button"
-                  onClick={() => setRound((r) => ({ ...r, name: randomRoundName() }))}
-                  title="Reroll name"
-                >
-                  🎲 Reroll
-                </button>
-              </div>
-              <input
-                className="input"
-                value={round.name}
-                onChange={(e) => setRound((r) => ({ ...r, name: e.target.value }))}
-                placeholder="Saturday skins"
-              />
-            </div>
-            <div>
-              <div className="label">Stake ($/skin)</div>
-              <input
-                className="input"
-                value={dollarsStringFromCents(round.stakeCents)}
-                onChange={(e) => setRound((r) => ({ ...r, stakeCents: centsFromDollarsString(e.target.value) }))}
-                inputMode="decimal"
-                placeholder="5"
-              />
-              <div className="small">Gross skins. Carryovers on ties. Tie after 18 remains a tie.</div>
-            </div>
-          </div>
-
-          <div style={{ height: 16 }} />
-
-          <div className="label">Players (2–4)</div>
-          <div className="small">Start with 2. Add up to 4.</div>
-          <div className="row">
-            {round.players.map((p, idx) => (
-              <div key={p.id} className="row two">
-                <div>
-                  <input
-                    className="input"
-                    ref={(el) => {
-                      if (!el) return
-                      if (focusPlayerId.current && focusPlayerId.current === p.id) {
-                        // focus on next paint
-                        queueMicrotask(() => el.focus())
-                        focusPlayerId.current = null
-                      }
-                    }}
-                    value={p.name}
-                    onChange={(e) => updatePlayer(p.id, { name: e.target.value })}
-                    placeholder={`Player ${idx + 1}`}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
-                  {round.players.length > 2 && (
-                    <button className="btn ghost" onClick={() => removePlayer(p.id)}>
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button className="btn" onClick={addPlayer} disabled={round.players.length >= 4}>
-                + Add player
-              </button>
-              <button className="btn primary" disabled={!canStart} onClick={() => setScreen('quick')}>
-                Start round →
-              </button>
-              <button className="btn ghost" disabled={!canStart} onClick={() => setScreen('holes')}>
-                Grid view
-              </button>
-              <button className="btn ghost" onClick={reset}>
-                New round
-              </button>
-            </div>
+            <button className="btn primary" onClick={() => startNew('skins')} type="button">
+              Skins →
+            </button>
+            <button className="btn primary" onClick={() => startNew('wolf')} type="button">
+              Wolf →
+            </button>
           </div>
 
           {stored.rounds.length > 0 && (
@@ -410,6 +404,7 @@ export default function App() {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>Game</th>
                     <th>Name</th>
                     <th>Players</th>
                     <th style={{ textAlign: 'right' }}>Stake</th>
@@ -420,17 +415,20 @@ export default function App() {
                   {stored.rounds
                     .slice()
                     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-                    .slice(0, 8)
+                    .slice(0, 10)
                     .map((r) => (
                       <tr key={r.id}>
-                        <td>{r.name || 'Skins'}</td>
+                        <td className="small">{r.game === 'wolf' ? 'Wolf' : 'Skins'}</td>
+                        <td>{r.name || (r.game === 'wolf' ? 'Wolf' : 'Skins')}</td>
                         <td className="small">{r.players.map((p) => p.name).join(', ')}</td>
-                        <td style={{ textAlign: 'right' }}>{stakeLabel(r.stakeCents)}</td>
                         <td style={{ textAlign: 'right' }}>
-                          <button className="btn ghost" onClick={() => loadExistingRound(r)}>
+                          {r.game === 'wolf' ? wolfLabel(r.wolfPointsPerHole) : stakeLabel(r.stakeCents || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button className="btn ghost" onClick={() => loadExistingRound(r)} type="button">
                             Open
                           </button>{' '}
-                          <button className="btn danger" onClick={() => deleteExistingRound(r.id)}>
+                          <button className="btn danger" onClick={() => deleteExistingRound(r.id)} type="button">
                             Delete
                           </button>
                         </td>
@@ -443,14 +441,144 @@ export default function App() {
         </div>
       )}
 
+      {screen === 'setup' && (
+        <div className="card">
+          <div className="row two">
+            <div>
+              <div className="labelRow">
+                <div className="label">Round name</div>
+                {round.game === 'skins' ? (
+                  <button
+                    className="btn ghost iconBtn"
+                    type="button"
+                    onClick={() => setRound((r) => ({ ...r, name: randomSkinsName() }))}
+                    title="Reroll name"
+                  >
+                    🎲 Reroll
+                  </button>
+                ) : (
+                  <button
+                    className="btn ghost iconBtn"
+                    type="button"
+                    onClick={() => setRound((r) => ({ ...r, name: randomWolfName() }))}
+                    title="Reroll name"
+                  >
+                    🎲 Reroll
+                  </button>
+                )}
+              </div>
+              <input
+                className="input"
+                value={round.name}
+                onChange={(e) => setRound((r) => ({ ...r, name: e.target.value }))}
+                placeholder="Saturday skins"
+              />
+            </div>
+
+            {round.game === 'skins' ? (
+              <div>
+                <div className="label">Stake ($/skin)</div>
+                <input
+                  className="input"
+                  value={dollarsStringFromCents(round.stakeCents || 0)}
+                  onChange={(e) => setRound((r) => ({ ...r, stakeCents: centsFromDollarsString(e.target.value) }))}
+                  inputMode="decimal"
+                  placeholder="5"
+                />
+                <div className="small">Gross skins. Carryovers on ties. Tie after 18 remains a tie.</div>
+              </div>
+            ) : (
+              <div>
+                <div className="label">Points per hole</div>
+                <input
+                  className="input"
+                  value={String(round.wolfPointsPerHole ?? 1)}
+                  onChange={(e) => {
+                    const n = Number(e.target.value)
+                    if (!Number.isFinite(n)) return
+                    setRound((r) => ({ ...r, wolfPointsPerHole: Math.max(1, Math.min(10, Math.round(n))) }))
+                  }}
+                  inputMode="numeric"
+                  placeholder="1"
+                />
+                <div className="small">Wolf is 4 players only (v1). Best-ball match-play points per hole.</div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ height: 16 }} />
+
+          <div className="label">Players (2–4)</div>
+          <div className="small">{round.game === 'wolf' ? 'Wolf is 4 players only.' : 'Start with 2. Add up to 4.'}</div>
+
+          <div className="row">
+            {round.players.map((p, idx) => (
+              <div key={p.id} className="row two">
+                <div>
+                  <input
+                    className="input"
+                    ref={(el) => {
+                      if (!el) return
+                      if (focusPlayerId.current && focusPlayerId.current === p.id) {
+                        queueMicrotask(() => el.focus())
+                        focusPlayerId.current = null
+                      }
+                    }}
+                    value={p.name}
+                    onChange={(e) => updatePlayer(p.id, { name: e.target.value })}
+                    placeholder={`Player ${idx + 1}`}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
+                  {round.game === 'skins' && round.players.length > 2 && (
+                    <button className="btn ghost" onClick={() => removePlayer(p.id)} type="button">
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {round.game === 'skins' && (
+                <button className="btn" onClick={addPlayer} disabled={round.players.length >= 4} type="button">
+                  + Add player
+                </button>
+              )}
+              <button className="btn primary" disabled={!canStart} onClick={() => setScreen('quick')} type="button">
+                Start round →
+              </button>
+              <button className="btn ghost" disabled={!canStart} onClick={() => setScreen('holes')} type="button">
+                Grid view
+              </button>
+              <button className="btn ghost" onClick={resetToGamePicker} type="button">
+                Change game
+              </button>
+              <button className="btn ghost" onClick={resetSameGame} type="button">
+                New round
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {screen === 'holes' && (
         <div className="card">
           <div className="row">
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div className="label">Round</div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Skins'}</div>
-                <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
+                {round.game === 'skins' && skins && <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>}
+                {round.game === 'wolf' && wolf && (
+                  <div className="small">
+                    Points leader: {
+                      round.players
+                        .slice()
+                        .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))[0]?.name
+                    }
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <label className="toggle small" title="Lock disables edits (useful once a round is final)">
@@ -461,30 +589,36 @@ export default function App() {
                   />
                   Lock round
                 </label>
-                <button className="btn ghost" onClick={() => setScreen('quick')}>
+                <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                   Quick mode
                 </button>
-                <button className="btn ghost" onClick={() => setScreen('setup')}>
+                <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
                   ← Setup
                 </button>
-                <button className="btn primary" onClick={() => setScreen('settlement')}>
-                  Settlement →
+                <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
+                  {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
                 </button>
               </div>
             </div>
 
             <div className="holes">
-              <div className="holeGrid">
+              <div className="holeGrid" style={{ minWidth: 720 }}>
                 <div className="holeRow header">
-                  <div className="holeCell"><span className="small">Hole</span></div>
+                  <div className="holeCell">
+                    <span className="small">Hole</span>
+                  </div>
                   {round.players.map((p) => (
-                    <div key={p.id} className="holeCell"><span className="small">{p.name}</span></div>
+                    <div key={p.id} className="holeCell">
+                      <span className="small">{p.name}</span>
+                    </div>
                   ))}
                 </div>
 
                 {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => (
                   <div key={hole} className="holeRow">
-                    <div className="holeCell"><span className="holeNum">{hole}</span></div>
+                    <div className="holeCell">
+                      <span className="holeNum">{hole}</span>
+                    </div>
                     {round.players.map((p) => (
                       <div key={p.id} className="holeCell">
                         <input
@@ -503,47 +637,69 @@ export default function App() {
 
             <div style={{ height: 14 }} />
 
-            <div className="row two">
-              <div>
-                <div className="label">Skins won</div>
-                <table className="table">
-                  <tbody>
-                    {round.players.map((p) => (
-                      <tr key={p.id}>
-                        <td>{p.name}</td>
-                        <td style={{ textAlign: 'right' }}>{skins.skinsWon[p.id] || 0}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                <div className="label">Per-hole (winner / carry)</div>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Hole</th>
-                      <th>Winner</th>
-                      <th style={{ textAlign: 'right' }}>Skins</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {skins.holeResults.map((hr) => {
-                      const winner = hr.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : '—'
-                      const label = hr.winnerId ? winner : `tie (carry)`
-                      return (
-                        <tr key={hr.hole}>
-                          <td>{hr.hole}</td>
-                          <td>{label}</td>
-                          <td style={{ textAlign: 'right' }}>{hr.winnerId ? hr.wonSkins : hr.carrySkins ? `+${hr.carrySkins}` : '—'}</td>
+            {round.game === 'skins' && skins && (
+              <div className="row two">
+                <div>
+                  <div className="label">Skins won</div>
+                  <table className="table">
+                    <tbody>
+                      {round.players.map((p) => (
+                        <tr key={p.id}>
+                          <td>{p.name}</td>
+                          <td style={{ textAlign: 'right' }}>{skins.skinsWon[p.id] || 0}</td>
                         </tr>
-                      )
-                    })}
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <div className="label">Per-hole (winner / carry)</div>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Hole</th>
+                        <th>Winner</th>
+                        <th style={{ textAlign: 'right' }}>Skins</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {skins.holeResults.map((hr) => {
+                        const winner = hr.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : '—'
+                        const label = hr.winnerId ? winner : `tie (carry)`
+                        return (
+                          <tr key={hr.hole}>
+                            <td>{hr.hole}</td>
+                            <td>{label}</td>
+                            <td style={{ textAlign: 'right' }}>{hr.winnerId ? hr.wonSkins : hr.carrySkins ? `+${hr.carrySkins}` : '—'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  <div className="small">Note: ties carry 1 skin forward. Carry resets on a win. Ties after 18 remain unresolved.</div>
+                </div>
+              </div>
+            )}
+
+            {round.game === 'wolf' && wolf && (
+              <div>
+                <div className="label">Points (leaderboard)</div>
+                <table className="table">
+                  <tbody>
+                    {round.players
+                      .slice()
+                      .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
+                      .map((p) => (
+                        <tr key={p.id}>
+                          <td>{p.name}</td>
+                          <td style={{ textAlign: 'right' }}>{wolf.pointsByPlayer[p.id] || 0}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
-                <div className="small">Note: ties carry 1 skin forward. Carry resets on a win. Ties after 18 remain unresolved.</div>
+                <div className="small">Wolf rotates each hole (starting from Player 1 on hole 1). Choose partner in Quick mode (or play Lone Wolf).</div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -552,8 +708,13 @@ export default function App() {
         <div className="card">
           <div className="quickTop">
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Skins'}</div>
-              <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
+              {round.game === 'skins' && skins && <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>}
+              {round.game === 'wolf' && wolfHole && (
+                <div className="small">
+                  Hole {quickHole}: Wolf = {round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <label className="toggle small" title="Lock disables edits (useful once a round is final)">
@@ -566,7 +727,7 @@ export default function App() {
               </label>
               <div className="holePicker">
                 {quickHole > 1 ? (
-                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
+                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
                     ←
                   </button>
                 ) : (
@@ -585,46 +746,57 @@ export default function App() {
                   ))}
                 </select>
                 {quickHole < 18 ? (
-                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.min(18, h + 1))}>
+                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} type="button">
                     →
                   </button>
                 ) : (
                   <span style={{ width: 44 }} />
                 )}
               </div>
-              <button className="btn ghost" onClick={() => setScreen('holes')}>
+              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
                 Grid
               </button>
             </div>
           </div>
 
-          <div style={{ height: 10 }} />
-
-          <div className="card" style={{ padding: 12, marginBottom: 12 }}>
-            <div className="label">Hole summary</div>
-            {(() => {
-              const hr = skins.holeResults.find((x) => x.hole === quickHole)
-              if (!hr) return <div className="small">No data for this hole yet.</div>
-              if (!isHoleComplete(quickHole)) {
-                return <div className="small">Enter all players to score this hole.</div>
-              }
-              if (hr.winnerId) {
-                const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
-                return (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span className="pill">Winner: {winner}</span>
-                    <span className="pill">Skins: {hr.wonSkins}</span>
-                  </div>
-                )
-              }
-              return (
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span className="pill">Result: tie</span>
-                  <span className="pill">Carry now: {hr.carrySkins + 1} skin(s)</span>
-                </div>
-              )
-            })()}
-          </div>
+          {round.game === 'wolf' && wolfHole && (
+            <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
+              <div className="label">Wolf partner (for this hole)</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                {round.players
+                  .filter((p) => p.id !== wolfHole.wolfId)
+                  .map((p) => {
+                    const selected = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) === p.id
+                    return (
+                      <button
+                        key={p.id}
+                        className={`chip ${selected ? 'active' : ''}`}
+                        onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, p.id)}
+                        disabled={!!round.locked}
+                        type="button"
+                      >
+                        {p.name}
+                      </button>
+                    )
+                  })}
+                {(() => {
+                  const selected = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) === null
+                  return (
+                    <button
+                      className={`chip ${selected ? 'active' : ''}`}
+                      onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, null)}
+                      disabled={!!round.locked}
+                      type="button"
+                      title="Play lone wolf"
+                    >
+                      Lone
+                    </button>
+                  )
+                })()}
+              </div>
+              <div className="small">If you don’t pick a partner, it counts as Lone Wolf.</div>
+            </div>
+          )}
 
           <div className="row">
             {round.players.map((p) => {
@@ -642,6 +814,7 @@ export default function App() {
                           className={`chip ${val === n ? 'active' : ''}`}
                           onClick={() => setStroke(quickHole, p.id, String(n))}
                           disabled={!!round.locked}
+                          type="button"
                           title={`Set ${p.name} to ${n}`}
                         >
                           {n}
@@ -650,42 +823,21 @@ export default function App() {
                     </div>
 
                     <div className="stepper">
-                      <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked}>
+                      <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked} type="button">
                         −
                       </button>
                       <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
                       <button
                         className="stepBtn"
-                        onClick={() => {
-                          incStroke(quickHole, p.id, +1)
-                          // If this completes the hole, auto-advance to next incomplete.
-                          // Use a microtask so state updates apply first.
-                          queueMicrotask(() => {
-                            // Find next incomplete starting from current hole
-                            for (let h = quickHole; h <= 18; h++) {
-                              if (!isHoleComplete(h)) return
-                            }
-                            // current and all later holes complete; jump to next incomplete (wrap)
-                            for (let h = 1; h <= quickHole; h++) {
-                              if (!isHoleComplete(h)) {
-                                setQuickHole(h)
-                                return
-                              }
-                            }
-                          })
-                        }}
+                        onClick={() => incStroke(quickHole, p.id, +1)}
                         disabled={!!round.locked}
+                        type="button"
                       >
                         +
                       </button>
                     </div>
                   </div>
-                  <button
-                    className="btn ghost"
-                    disabled={!!round.locked}
-                    onClick={() => setStroke(quickHole, p.id, '')}
-                    title="Clear"
-                  >
+                  <button className="btn ghost" disabled={!!round.locked} onClick={() => setStroke(quickHole, p.id, '')} title="Clear" type="button">
                     Clear
                   </button>
                 </div>
@@ -694,7 +846,7 @@ export default function App() {
 
             <div className="footerActions">
               {quickHole > 1 ? (
-                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))}>
+                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
                   Prev hole
                 </button>
               ) : (
@@ -702,13 +854,7 @@ export default function App() {
               )}
 
               {quickHole < 18 ? (
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    const next = Math.min(18, quickHole + 1)
-                    setQuickHole(next)
-                  }}
-                >
+                <button className="btn primary" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} type="button">
                   Next hole
                 </button>
               ) : (
@@ -733,15 +879,16 @@ export default function App() {
                   }
                   setQuickHole(18)
                 }}
+                type="button"
               >
                 Next incomplete
               </button>
 
-              <button className="btn primary" onClick={() => setScreen('settlement')}>
-                Settlement →
+              <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
+                {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
               </button>
 
-              <button className="btn ghost" onClick={() => setScreen('setup')}>
+              <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
                 Setup
               </button>
             </div>
@@ -749,13 +896,13 @@ export default function App() {
         </div>
       )}
 
-      {screen === 'settlement' && (
+      {screen === 'settlement' && round.game === 'skins' && settlement && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div className="label">Settlement</div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Skins'}</div>
-              <div className="small">Skins stake: {stakeLabel(round.stakeCents)} (winner collects from each opponent)</div>
+              <div className="small">Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <label className="toggle small" title="Lock disables edits (useful once a round is final)">
@@ -766,16 +913,16 @@ export default function App() {
                 />
                 Lock round
               </label>
-              <button className="btn ghost" onClick={() => setScreen('quick')}>
+              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                 Quick mode
               </button>
-              <button className="btn ghost" onClick={() => setScreen('holes')}>
+              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
                 ← Back to holes
               </button>
-              <button className="btn" onClick={copySettlement}>
+              <button className="btn" onClick={copySettlement} type="button">
                 Copy
               </button>
-              <button className="btn danger" onClick={reset}>
+              <button className="btn ghost" onClick={resetSameGame} type="button">
                 New round
               </button>
             </div>
@@ -817,7 +964,9 @@ export default function App() {
                 <tbody>
                   {settlement.lines.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="small">No payments needed.</td>
+                      <td colSpan={3} className="small">
+                        No payments needed.
+                      </td>
                     </tr>
                   ) : (
                     settlement.lines.map((l, idx) => (
@@ -840,9 +989,65 @@ export default function App() {
           <textarea className="input" style={{ height: 180 }} readOnly value={settlementText()} />
 
           <div className="footerActions">
-            <button className="btn" onClick={copySettlement}>Copy settlement</button>
-            <button className="btn ghost" onClick={() => setScreen('holes')}>Back</button>
+            <button className="btn" onClick={copySettlement} type="button">
+              Copy settlement
+            </button>
+            <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
+              Back
+            </button>
           </div>
+        </div>
+      )}
+
+      {screen === 'settlement' && round.game === 'wolf' && wolf && (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div className="label">Standings</div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Wolf'}</div>
+              <div className="small">{wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label className="toggle small" title="Lock disables edits (useful once a round is final)">
+                <input
+                  type="checkbox"
+                  checked={!!round.locked}
+                  onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
+                />
+                Lock round
+              </label>
+              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
+                Quick mode
+              </button>
+              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
+                ← Back to holes
+              </button>
+              <button className="btn ghost" onClick={resetSameGame} type="button">
+                New round
+              </button>
+            </div>
+          </div>
+
+          <div style={{ height: 14 }} />
+
+          <div className="label">Points by player</div>
+          <table className="table">
+            <tbody>
+              {round.players
+                .slice()
+                .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
+                .map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.name}</td>
+                    <td style={{ textAlign: 'right' }}>{wolf.pointsByPlayer[p.id] || 0}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+
+          <div style={{ height: 14 }} />
+
+          <div className="small">Tip: pick Wolf partner per hole in Quick mode (or tap Lone).</div>
         </div>
       )}
     </div>

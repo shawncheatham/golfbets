@@ -18,7 +18,7 @@ function cloneNet(players: Player[], netById: Record<PlayerId, number>) {
 
 export function computeSettlement(round: Round): Settlement {
   const skins = computeSkins(round);
-  const potPerSkin = round.stakeCents;
+  const potPerSkin = round.stakeCents || 0;
 
   const netByPlayer: Record<PlayerId, number> = {};
   for (const p of round.players) {
@@ -42,7 +42,7 @@ export function computeSettlement(round: Round): Settlement {
   for (const hr of skins.holeResults) {
     if (!hr.winnerId || hr.wonSkins <= 0) continue;
     const winnerId = hr.winnerId;
-    const unit = round.stakeCents;
+    const unit = round.stakeCents || 0;
     const skinsCount = hr.wonSkins;
 
     net2[winnerId] += unit * skinsCount * (N - 1);
