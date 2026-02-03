@@ -122,22 +122,61 @@ a { color: inherit; }
 }
 
 .btn.primary {
-  background: rgba(102, 227, 164, 0.22);
-  border-color: rgba(102, 227, 164, 0.35);
+  /* Higher contrast primary */
+  background: rgba(102, 227, 164, 0.32);
+  border-color: rgba(102, 227, 164, 0.60);
+  box-shadow: 0 0 0 2px rgba(102, 227, 164, 0.22) inset;
+}
+
+:root[data-theme='light'] .btn.primary {
+  background: rgba(15, 123, 76, 0.18);
+  border-color: rgba(15, 123, 76, 0.55);
+  box-shadow: 0 0 0 2px rgba(15, 123, 76, 0.12) inset;
 }
 
 .btn.ghost {
   background: var(--btnGhostBg);
+  /* Slightly stronger outline so it doesn't blend with primary */
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+:root[data-theme='light'] .btn.ghost {
+  border-color: rgba(10, 20, 30, 0.16);
 }
 
 .btn.danger {
-  background: rgba(255, 107, 107, 0.16);
-  border-color: rgba(255, 107, 107, 0.35);
+  background: rgba(255, 107, 107, 0.22);
+  border-color: rgba(255, 107, 107, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.14) inset;
+}
+
+:root[data-theme='light'] .btn.danger {
+  background: rgba(180, 35, 24, 0.14);
+  border-color: rgba(180, 35, 24, 0.45);
+  box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.10) inset;
 }
 
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* Accessibility: make keyboard focus obvious in both themes */
+.btn:focus-visible,
+.input:focus-visible,
+.holeInput:focus-visible,
+.stepBtn:focus-visible,
+.chip:focus-visible {
+  outline: 3px solid rgba(102, 227, 164, 0.65);
+  outline-offset: 2px;
+}
+
+:root[data-theme='light'] .btn:focus-visible,
+:root[data-theme='light'] .input:focus-visible,
+:root[data-theme='light'] .holeInput:focus-visible,
+:root[data-theme='light'] .stepBtn:focus-visible,
+:root[data-theme='light'] .chip:focus-visible {
+  outline: 3px solid rgba(15, 123, 76, 0.60);
 }
 
 .pill {
@@ -282,11 +321,15 @@ a { color: inherit; }
   height: 38px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--btnGhostBg);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--pillBg);
   color: var(--text);
   font-weight: 800;
   cursor: pointer;
+}
+
+:root[data-theme='light'] .chip {
+  border-color: rgba(10, 20, 30, 0.18);
 }
 
 .chip.active {
