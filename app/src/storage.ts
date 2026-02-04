@@ -30,6 +30,12 @@ export function loadRounds(): StoredRounds {
           ...r,
           wolfPointsPerHole: typeof r.wolfPointsPerHole === 'number' ? r.wolfPointsPerHole : 1,
           wolfLoneMultiplier: typeof r.wolfLoneMultiplier === 'number' ? r.wolfLoneMultiplier : 2,
+          wolfDollarsPerPointCents:
+            typeof r.wolfDollarsPerPointCents === 'number'
+              ? r.wolfDollarsPerPointCents
+              : typeof r.dollarsPerPointCents === 'number'
+                ? r.dollarsPerPointCents
+                : 0,
           wolfStartingIndex: typeof r.wolfStartingIndex === 'number' ? r.wolfStartingIndex : 0,
           wolfPartnerByHole: r.wolfPartnerByHole && typeof r.wolfPartnerByHole === 'object' ? r.wolfPartnerByHole : {},
         };

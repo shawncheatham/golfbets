@@ -20,6 +20,7 @@ export type Round = {
   // Wolf (4 players v1)
   wolfPointsPerHole?: number; // match-play points
   wolfLoneMultiplier?: number; // e.g. 2x
+  wolfDollarsPerPointCents?: number; // optional: $ per point (money common)
   wolfStartingIndex?: number; // 0..3 (which player is Wolf on hole 1)
   wolfPartnerByHole?: Record<HoleNumber, PlayerId | null>; // partner id, or null for lone wolf
 

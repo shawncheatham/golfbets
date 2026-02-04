@@ -6,6 +6,7 @@ import type { GameType, HoleNumber, Player, PlayerId, Round } from './types'
 import { computeSkins, stakeLabel } from './logic/skins'
 import { computeSettlement } from './logic/settlement'
 import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
+import { computeWolfSettlement } from './logic/wolfSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
@@ -113,6 +114,7 @@ function createEmptyWolfRound(): Round {
     name: randomWolfName(),
     wolfPointsPerHole: 1,
     wolfLoneMultiplier: 2,
+    wolfDollarsPerPointCents: 0,
     wolfStartingIndex: 0,
     wolfPartnerByHole: {},
     players: [
@@ -160,6 +162,12 @@ export default function App() {
   const skins = useMemo(() => (round.game === 'skins' ? computeSkins(round) : null), [round])
   const settlement = useMemo(() => (round.game === 'skins' ? computeSettlement(round) : null), [round])
   const wolf = useMemo(() => (round.game === 'wolf' ? computeWolf(round) : null), [round])
+  const wolfSettlement = useMemo(() => {
+    if (round.game !== 'wolf' || !wolf) return null
+    const cents = round.wolfDollarsPerPointCents || 0
+    if (cents <= 0) return null
+    return computeWolfSettlement(round.players, wolf.pointsByPlayer, cents)
+  }, [round, wolf])
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
 
@@ -423,6 +431,33 @@ export default function App() {
     }
   }
 
+  function wolfSettlementText(): string {
+    if (round.game !== 'wolf' || !wolf || !wolfSettlement) return ''
+    const through = lastCompletedHole()
+    const dollarsPerPoint = dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)
+
+    const pts = round.players
+      .map((p) => ({ name: p.name, pts: wolf.pointsByPlayer[p.id] || 0 }))
+      .sort((a, b) => b.pts - a.pts)
+      .map((x) => `${x.name} ${x.pts}`)
+      .join(' • ')
+
+    const lines = wolfSettlement.lines
+      .map((l) => `${l.from.name} → ${l.to.name}: $${(l.amountCents / 100).toFixed(2)}`)
+      .join('\n')
+
+    return `Golf Bets — Wolf settlement\nRound: ${round.name || 'Wolf'}\nThrough ${through}/18 • $${dollarsPerPoint}/pt\n\nPoints:\n${pts}\n\nSuggested payments:\n${lines || '(no payments)'}`
+  }
+
+  async function copyWolfSettlement() {
+    try {
+      await navigator.clipboard.writeText(wolfSettlementText())
+      alert('Copied settlement (ready to paste in the group chat)')
+    } catch {
+      alert('Could not copy. You can manually select and copy the text.')
+    }
+  }
+
   function isRoundComplete(): boolean {
     for (let h = 1; h <= 18; h++) {
       if (!isHoleComplete(h)) return false
@@ -433,6 +468,11 @@ export default function App() {
   function lockRound(andGoToSettlement = false) {
     setRound((r) => ({ ...r, locked: true }))
     if (andGoToSettlement) setScreen('settlement')
+  }
+
+  function unlockRound() {
+    if (!confirm('Unlock round? This allows edits and may change standings/settlement.')) return
+    setRound((r) => ({ ...r, locked: false }))
   }
 
   async function copySettlement() {
@@ -615,6 +655,15 @@ export default function App() {
                   inputMode="numeric"
                   placeholder="1"
                 />
+                <div style={{ height: 10 }} />
+                <div className="label">$ per point (optional)</div>
+                <input
+                  className="input"
+                  value={dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)}
+                  onChange={(e) => setRound((r) => ({ ...r, wolfDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
+                  inputMode="decimal"
+                  placeholder="" 
+                />
                 <div className="small">Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.</div>
               </div>
             )}
@@ -710,14 +759,18 @@ export default function App() {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <label className="toggle small" title="Lock disables edits (useful once a round is final)">
-                  <input
-                    type="checkbox"
-                    checked={!!round.locked}
-                    onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
-                  />
-                  Lock round
-                </label>
+                {round.locked ? (
+                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
+                ) : (
+                  <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                    Lock round
+                  </button>
+                )}
+                {round.locked && (
+                  <button className="btn ghost" onClick={unlockRound} type="button">
+                    Unlock
+                  </button>
+                )}
                 <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                   Quick mode
                 </button>
@@ -728,7 +781,7 @@ export default function App() {
                   Share status
                 </button>
                 {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
-                  <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                  <button className={round.locked ? 'btn primary' : 'btn'} onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
                     Share settlement
                   </button>
                 )}
@@ -986,14 +1039,18 @@ export default function App() {
               )}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <label className="toggle small" title="Lock disables edits (useful once a round is final)">
-                <input
-                  type="checkbox"
-                  checked={!!round.locked}
-                  onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
-                />
-                Lock round
-              </label>
+              {round.locked ? (
+                <>
+                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
+                  <button className="btn ghost" onClick={unlockRound} type="button">
+                    Unlock
+                  </button>
+                </>
+              ) : (
+                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                  Lock round
+                </button>
+              )}
               <div className="holePicker">
                 {quickHole > 1 ? (
                   <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
@@ -1241,14 +1298,18 @@ export default function App() {
               <div className="small">Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <label className="toggle small" title="Lock disables edits (useful once a round is final)">
-                <input
-                  type="checkbox"
-                  checked={!!round.locked}
-                  onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
-                />
-                Lock round
-              </label>
+              {round.locked ? (
+                <>
+                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
+                  <button className="btn ghost" onClick={unlockRound} type="button">
+                    Unlock
+                  </button>
+                </>
+              ) : (
+                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                  Lock round
+                </button>
+              )}
               <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                 Quick mode
               </button>
@@ -1258,7 +1319,12 @@ export default function App() {
               <button className="btn" onClick={copySettlement} type="button">
                 Copy settlement
               </button>
-              <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+              <button
+                className={round.locked ? 'btn primary' : 'btn'}
+                onClick={shareSettlement}
+                type="button"
+                title="Copy the settlement text to paste in the group chat"
+              >
                 Share settlement
               </button>
               <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
@@ -1350,14 +1416,26 @@ export default function App() {
               <div className="small">{wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <label className="toggle small" title="Lock disables edits (useful once a round is final)">
-                <input
-                  type="checkbox"
-                  checked={!!round.locked}
-                  onChange={(e) => setRound((r) => ({ ...r, locked: e.target.checked }))}
-                />
-                Lock round
-              </label>
+              {round.locked ? (
+                <>
+                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
+                  <button className="btn ghost" onClick={unlockRound} type="button">
+                    Unlock
+                  </button>
+                </>
+              ) : (
+                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                  Lock round
+                </button>
+              )}
+              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                Share status
+              </button>
+              {wolfSettlement && (
+                <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                  Share settlement
+                </button>
+              )}
               <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                 Quick mode
               </button>
@@ -1386,6 +1464,38 @@ export default function App() {
                 ))}
             </tbody>
           </table>
+
+          {wolfSettlement && (
+            <>
+              <div style={{ height: 14 }} />
+              <div className="label">Suggested payments</div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th style={{ textAlign: 'right' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wolfSettlement.lines.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="small">No payments needed.</td>
+                    </tr>
+                  ) : (
+                    wolfSettlement.lines.map((l, idx) => (
+                      <tr key={idx}>
+                        <td>{l.from.name}</td>
+                        <td>{l.to.name}</td>
+                        <td style={{ textAlign: 'right' }}>${(l.amountCents / 100).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div className="small">Based on ${dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)} per point.</div>
+            </>
+          )}
 
           <div style={{ height: 14 }} />
 
