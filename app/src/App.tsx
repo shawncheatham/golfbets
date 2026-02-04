@@ -449,9 +449,6 @@ export default function App() {
   }
 
   function headerPill() {
-    // On the game picker, avoid showing game-specific stake/progress.
-    if (screen === 'game') return 'Choose a game'
-
     const through = lastCompletedHole()
     const progress = `Through ${through}/18`
 
@@ -485,7 +482,7 @@ export default function App() {
         </div>
 
         <div className="headerRight">
-          <div className="pill">{headerPill()}</div>
+          {screen !== 'game' && <div className="pill">{headerPill()}</div>}
           <button
             className="btn ghost iconBtn"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
