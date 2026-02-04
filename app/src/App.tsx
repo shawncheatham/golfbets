@@ -281,6 +281,11 @@ export default function App() {
     return 18
   }
 
+  const currentHole = () => {
+    const through = lastCompletedHole()
+    return Math.min(18, through + 1)
+  }
+
   function clearHole(hole: number) {
     if (round.locked) return
     if (!confirm(`Clear all scores for hole ${hole}?`)) return
@@ -813,9 +818,12 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <div className="holeRow header">
+                    <div className="holeRow skins header">
                       <div className="holeCell">
                         <span className="small">Hole</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Result</span>
                       </div>
                       {round.players.map((p) => (
                         <div key={p.id} className="holeCell">
@@ -824,29 +832,47 @@ export default function App() {
                       ))}
                     </div>
 
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => (
-                      <div key={hole} className="holeRow">
-                        <div className="holeCell">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span className="holeNum">{hole}</span>
-                            <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
-                              Clear
-                            </button>
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                      const hr = skins?.holeResults?.find((x) => x.hole === (hole as HoleNumber))
+                      const winnerName = hr?.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : null
+                      const isComplete = isHoleComplete(hole)
+                      const label = !hr
+                        ? '—'
+                        : !isComplete
+                          ? `incomplete (${round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length}/${round.players.length})`
+                          : hr.winnerId
+                            ? `${winnerName || 'Winner'} (+${hr.wonSkins})`
+                            : `tie (carry → ${(hr.carrySkins || 0) + 1})`
+
+                      return (
+                        <div key={hole} className="holeRow skins">
+                          <div className="holeCell">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <span className="holeNum">{hole}</span>
+                              <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
+                                Clear
+                              </button>
+                            </div>
                           </div>
+
+                          <div className="holeCell">
+                            <span className="small">{label}</span>
+                          </div>
+
+                          {round.players.map((p) => (
+                            <div key={p.id} className="holeCell">
+                              <input
+                                className="holeInput"
+                                value={round.strokesByHole[hole]?.[p.id] ?? ''}
+                                onChange={(e) => setStroke(hole, p.id, e.target.value)}
+                                inputMode="numeric"
+                                placeholder="-"
+                              />
+                            </div>
+                          ))}
                         </div>
-                        {round.players.map((p) => (
-                          <div key={p.id} className="holeCell">
-                            <input
-                              className="holeInput"
-                              value={round.strokesByHole[hole]?.[p.id] ?? ''}
-                              onChange={(e) => setStroke(hole, p.id, e.target.value)}
-                              inputMode="numeric"
-                              placeholder="-"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </>
                 )}
               </div>
@@ -1141,6 +1167,10 @@ export default function App() {
               ) : (
                 <span />
               )}
+              <button className="btn" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole">
+                Current
+              </button>
+
               <button
                 className="btn"
                 onClick={() => {

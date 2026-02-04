@@ -264,6 +264,10 @@ a { color: inherit; }
   grid-template-columns: 64px 140px 180px repeat(4, 1fr);
 }
 
+.holeRow.skins {
+  grid-template-columns: 64px 220px repeat(4, 1fr);
+}
+
 .holeRow.header {
   background: rgba(255, 255, 255, 0.04);
 }
