@@ -1,4 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Box,
+  Button,
+  Container,
+  HStack,
+  Heading,
+  Icon,
+  SimpleGrid,
+  Text,
+  useColorMode,
+} from '@chakra-ui/react'
+import { ChevronRight, Moon, Sun } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -131,9 +143,13 @@ function createEmptyWolfRound(): Round {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('game')
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
+  const { colorMode, setColorMode } = useColorMode()
 
   useEffect(() => {
+    // Keep legacy CSS theme in sync while we migrate UI to Chakra.
     applyTheme(theme)
+    if (theme !== colorMode) setColorMode(theme)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme])
 
   // Local persistence
@@ -528,37 +544,54 @@ export default function App() {
   }, [round, quickHole])
 
   return (
-    <div className="container">
-      <div className="header">
-        <div className="brand">
-          <h1>Golf Bets</h1>
-          <span className="tagline">Less math, fewer arguments.</span>
-          <span className="subbrand" aria-hidden="true"></span>
-        </div>
+    <Container maxW="1100px" px={{ base: 4, md: 6 }} py={{ base: 5, md: 7 }}>
+      <HStack justify="space-between" align="flex-start" mb={{ base: 5, md: 7 }}>
+        <Box>
+          <Heading size={{ base: 'lg', md: 'xl' }} letterSpacing="-0.02em">
+            Golf Bets
+          </Heading>
+          <Text fontSize={{ base: 'md', md: 'lg' }} color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={600}>
+            Less math, fewer arguments.
+          </Text>
+        </Box>
 
-        <div className="headerRight">
-          <button
-            className="btn ghost iconBtn"
-            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            type="button"
-          >
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
-        </div>
-      </div>
+        <Button
+          variant="secondary"
+          leftIcon={
+            <Icon as={theme === 'dark' ? Sun : Moon} aria-hidden="true" boxSize={4} />
+          }
+          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          type="button"
+        >
+          {theme === 'dark' ? 'Light' : 'Dark'}
+        </Button>
+      </HStack>
 
       {screen === 'game' && (
-        <div className="card">
-          <div className="label">Choose a game</div>
-          <div className="row two">
-            <button className="btn primary" onClick={() => startNew('skins')} type="button">
-              Skins →
-            </button>
-            <button className="btn primary" onClick={() => startNew('wolf')} type="button">
-              Wolf →
-            </button>
-          </div>
+        <Box className="card" p={{ base: 4, md: 6 }}>
+          <Text fontSize="md" fontWeight={700} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
+            Choose a game
+          </Text>
+
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <Button
+              variant="primary"
+              rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
+              onClick={() => startNew('skins')}
+              type="button"
+            >
+              Skins
+            </Button>
+            <Button
+              variant="primary"
+              rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
+              onClick={() => startNew('wolf')}
+              type="button"
+            >
+              Wolf
+            </Button>
+          </SimpleGrid>
 
           {stored.rounds.length > 0 && (
             <>
@@ -601,7 +634,7 @@ export default function App() {
               </table>
             </>
           )}
-        </div>
+        </Box>
       )}
 
       {screen === 'setup' && (
@@ -1565,6 +1598,6 @@ export default function App() {
           <div className="small">Tip: pick Wolf partner per hole in Quick mode (or tap Lone).</div>
         </div>
       )}
-    </div>
+    </Container>
   )
 }
