@@ -238,6 +238,21 @@ export default function App() {
       }
     }
 
+    // Wolf: prevent accidental Lone Wolf (must be intentional if no partner selected)
+    if (round.game === 'wolf' && n !== null) {
+      const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
+      if (partnerId === null) {
+        // only prompt when first score is being entered for the hole
+        const existing = round.strokesByHole[hole] || {}
+        const anyEntered = round.players.some((p) => typeof existing[p.id] === 'number')
+        if (!anyEntered) {
+          const wolfId = wolfForHole(round, hole as HoleNumber).wolfId
+          const wolfName = round.players.find((p) => p.id === wolfId)?.name || 'Wolf'
+          if (!confirm(`No partner selected for hole ${hole}. Confirm ${wolfName} is playing Lone Wolf?`)) return
+        }
+      }
+    }
+
     setRound((r) => {
       const holeRec = r.strokesByHole[hole] || {}
       return {
@@ -410,13 +425,18 @@ export default function App() {
 
     if (round.game === 'wolf' && wolf) {
       const pts = wolfLabel(round.wolfPointsPerHole)
-      const standings = round.players
+      const cents = round.wolfDollarsPerPointCents || 0
+      const money = cents > 0 ? ` — $${dollarsStringFromCents(cents)}/pt` : ''
+
+      const sorted = round.players
         .map((p) => ({ name: p.name, pts: wolf.pointsByPlayer[p.id] || 0 }))
         .sort((a, b) => b.pts - a.pts)
-        .map((x) => `- ${x.name}: ${x.pts}`)
-        .join('\n')
 
-      return `Wolf — Through ${through}/18 — ${pts}\n${standings.replaceAll('- ', '').replaceAll(': ', ' ')}`
+      const leader = sorted[0]
+      const leaderLine = leader ? `Leader: ${leader.name} (${leader.pts})` : ''
+      const inline = sorted.map((x) => `${x.name} ${x.pts}`).join(' • ')
+
+      return `Wolf — Through ${through}/18 — ${pts}${money}\n${leaderLine}\n${inline}`
     }
 
     return `Golf Bets status\nRound: ${round.name || 'Round'}\nThrough: ${through}/18`
@@ -808,6 +828,28 @@ export default function App() {
               </div>
             )}
 
+            {round.game === 'wolf' && wolf && !round.locked && isRoundComplete() && (
+              <div className="card" style={{ padding: 12, marginTop: 12 }}>
+                <div style={{ fontWeight: 800, marginBottom: 4 }}>Round complete</div>
+                <div className="small" style={{ marginBottom: 10 }}>
+                  Lock the round to prevent edits, then share standings (and settlement if $/pt is set).
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button className="btn primary" onClick={() => lockRound(true)} type="button">
+                    Lock + open standings →
+                  </button>
+                  <button className="btn" onClick={copyStatus} type="button">
+                    Share standings
+                  </button>
+                  {wolfSettlement && (
+                    <button className="btn" onClick={copyWolfSettlement} type="button">
+                      Share settlement
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="holes">
               <div className="holeGrid" style={{ minWidth: round.game === 'wolf' ? 980 : 720 }}>
                 {round.game === 'wolf' ? (
@@ -822,6 +864,9 @@ export default function App() {
                       <div className="holeCell">
                         <span className="small">Pairing</span>
                       </div>
+                      <div className="holeCell">
+                        <span className="small">Result</span>
+                      </div>
                       {round.players.map((p) => (
                         <div key={p.id} className="holeCell">
                           <span className="small">{p.name}</span>
@@ -835,6 +880,21 @@ export default function App() {
                       const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
                       const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
                       const pairingLabel = partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'
+
+                      const hr = (wolf?.holeResults || []).find((x) => x.hole === (hole as HoleNumber))
+                      const centsPerPoint = round.wolfDollarsPerPointCents || 0
+
+                      const resultLabel = (() => {
+                        if (!hr || hr.status === 'incomplete') return '—'
+                        if (hr.status === 'tie') return 'Tie (0)'
+
+                        // Show Wolf's net change for the hole (includes lone multiplier)
+                        const dPts = hr.pointsDeltaByPlayer[wid] || 0
+                        const sign = dPts > 0 ? '+' : ''
+                        const money = centsPerPoint > 0 ? ` • $${((Math.abs(dPts) * centsPerPoint) / 100).toFixed(0)}` : ''
+                        const loneTag = partnerId ? '' : ' (Lone)'
+                        return `Wolf ${sign}${dPts}${loneTag}${money}`
+                      })()
 
                       return (
                         <div key={hole} className="holeRow wolf">
@@ -853,6 +913,9 @@ export default function App() {
                           </div>
                           <div className="holeCell">
                             <span className="small">{pairingLabel}</span>
+                          </div>
+                          <div className="holeCell">
+                            <span className="small">{resultLabel}</span>
                           </div>
                           {round.players.map((p) => (
                             <div key={p.id} className="holeCell">
@@ -1025,13 +1088,24 @@ export default function App() {
               )}
               {round.game === 'wolf' && wolfHole && (
                 <div className="small">
-                  Hole {quickHole}: Wolf = {round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'}
                   {(() => {
+                    const wolfName = round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'
                     const partnerId = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) as PlayerId | null
                     const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                    const otherNames = round.players
+                      .filter((p) => p.id !== wolfHole.wolfId && p.id !== partnerId)
+                      .map((p) => p.name)
+                      .join(' + ')
+
+                    const teams = partnerName
+                      ? `Teams: ${wolfName} + ${partnerName} vs ${otherNames}`
+                      : `Lone Wolf: ${wolfName} vs ${otherNames}`
+
                     return (
                       <>
+                        Hole {quickHole}: Wolf = {wolfName}
                         {' • '}Pairing: {partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'}
+                        {' • '}{teams}
                       </>
                     )
                   })()}

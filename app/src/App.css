@@ -261,7 +261,7 @@ a { color: inherit; }
 }
 
 .holeRow.wolf {
-  grid-template-columns: 64px 140px 180px repeat(4, 1fr);
+  grid-template-columns: 64px 140px 180px 220px repeat(4, 1fr);
 }
 
 .holeRow.skins {
