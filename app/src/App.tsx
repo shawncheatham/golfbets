@@ -221,6 +221,15 @@ export default function App() {
     const n = v.trim() === '' ? null : Number(v)
     if (n !== null && (!Number.isFinite(n) || n < 0 || !Number.isInteger(n))) return
 
+    // Error-proofing: confirm extreme values that are commonly fat-fingers.
+    if (n !== null) {
+      const extreme = n <= 1 || n >= 15
+      if (extreme) {
+        const who = round.players.find((p) => p.id === playerId)?.name || 'Player'
+        if (!confirm(`Set ${who} to ${n} on hole ${hole}?`)) return
+      }
+    }
+
     setRound((r) => {
       const holeRec = r.strokesByHole[hole] || {}
       return {
@@ -270,6 +279,24 @@ export default function App() {
       if (!isHoleComplete(h)) return h
     }
     return 18
+  }
+
+  function clearHole(hole: number) {
+    if (round.locked) return
+    if (!confirm(`Clear all scores for hole ${hole}?`)) return
+
+    setRound((r) => {
+      const holeRec = r.strokesByHole[hole] || {}
+      const nextHole: Record<PlayerId, number | null> = { ...holeRec }
+      for (const p of r.players) nextHole[p.id] = null
+      return {
+        ...r,
+        strokesByHole: {
+          ...r.strokesByHole,
+          [hole]: nextHole,
+        },
+      }
+    })
   }
 
   useEffect(() => {
@@ -387,6 +414,11 @@ export default function App() {
       if (!isHoleComplete(h)) return false
     }
     return true
+  }
+
+  function lockRound(andGoToSettlement = false) {
+    setRound((r) => ({ ...r, locked: true }))
+    if (andGoToSettlement) setScreen('settlement')
   }
 
   async function copySettlement() {
@@ -641,7 +673,18 @@ export default function App() {
               <div>
                 <div className="label">Round</div>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
-                {round.game === 'skins' && skins && <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>}
+                {round.game === 'skins' && skins && (
+                  <div className="small">
+                    Carry: {skins.carryToNext} skin(s)
+                    {(() => {
+                      const leader = round.players
+                        .slice()
+                        .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
+                      const n = leader ? skins.skinsWon[leader.id] || 0 : 0
+                      return leader ? ` • Leader: ${leader.name} (${n})` : ''
+                    })()}
+                  </div>
+                )}
                 {round.game === 'wolf' && wolf && (
                   <div className="small">
                     Points leader: {
@@ -681,6 +724,23 @@ export default function App() {
               </div>
             </div>
 
+            {round.game === 'skins' && settlement && !round.locked && isRoundComplete() && (
+              <div className="card" style={{ padding: 12, marginTop: 12 }}>
+                <div style={{ fontWeight: 800, marginBottom: 4 }}>Round complete</div>
+                <div className="small" style={{ marginBottom: 10 }}>
+                  Lock the round to prevent edits, then share the settlement to the group.
+                </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button className="btn primary" onClick={() => lockRound(true)} type="button">
+                    Lock + open settlement →
+                  </button>
+                  <button className="btn" onClick={shareSettlement} type="button">
+                    Share settlement
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="holes">
               <div className="holeGrid" style={{ minWidth: round.game === 'wolf' ? 980 : 720 }}>
                 {round.game === 'wolf' ? (
@@ -712,7 +772,12 @@ export default function App() {
                       return (
                         <div key={hole} className="holeRow wolf">
                           <div className="holeCell">
-                            <span className="holeNum">{hole}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              <span className="holeNum">{hole}</span>
+                              <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
+                                Clear
+                              </button>
+                            </div>
                           </div>
                           <div className="holeCell">
                             <span className="small" style={{ fontWeight: 700 }}>
@@ -753,7 +818,12 @@ export default function App() {
                     {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => (
                       <div key={hole} className="holeRow">
                         <div className="holeCell">
-                          <span className="holeNum">{hole}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span className="holeNum">{hole}</span>
+                            <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
+                              Clear
+                            </button>
+                          </div>
                         </div>
                         {round.players.map((p) => (
                           <div key={p.id} className="holeCell">
@@ -847,7 +917,18 @@ export default function App() {
           <div className="quickTop">
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
-              {round.game === 'skins' && skins && <div className="small">Carry to next hole: {skins.carryToNext} skin(s)</div>}
+              {round.game === 'skins' && skins && (
+                <div className="small">
+                  Carry: {skins.carryToNext} skin(s)
+                  {(() => {
+                    const leader = round.players
+                      .slice()
+                      .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
+                    const n = leader ? skins.skinsWon[leader.id] || 0 : 0
+                    return leader ? ` • Leader: ${leader.name} (${n})` : ''
+                  })()}
+                </div>
+              )}
               {round.game === 'wolf' && wolfHole && (
                 <div className="small">
                   Hole {quickHole}: Wolf = {round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'}
@@ -1043,6 +1124,10 @@ export default function App() {
 
               <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
                 {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
+              </button>
+
+              <button className="btn ghost" onClick={() => clearHole(quickHole)} disabled={!!round.locked} type="button">
+                Clear hole
               </button>
 
               <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
