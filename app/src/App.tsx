@@ -513,16 +513,6 @@ export default function App() {
     }
   }
 
-  function headerPill() {
-    const through = lastCompletedHole()
-    const progress = `Through ${through}/18`
-
-    if (round.game === 'wolf') {
-      return `${wolfLabel(round.wolfPointsPerHole)} • ${progress}`
-    }
-    return `${stakeLabel(round.stakeCents || 0)} per skin • ${progress}`
-  }
-
   function setWolfPartnerForHole(hole: HoleNumber, partnerId: PlayerId | null) {
     if (round.locked) return
     setRound((r) => {
@@ -547,7 +537,6 @@ export default function App() {
         </div>
 
         <div className="headerRight">
-          {screen !== 'game' && <div className="pill">{headerPill()}</div>}
           <button
             className="btn ghost iconBtn"
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
