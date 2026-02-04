@@ -354,20 +354,27 @@ export default function App() {
 
   function settlementText(): string {
     if (!settlement) return ''
+
+    const through = lastCompletedHole()
     const stake = stakeLabel(round.stakeCents || 0)
-    const lines = settlement.lines
-      .map((l) => `${l.from.name} pays ${l.to.name} $${(l.amountCents / 100).toFixed(2)}`)
-      .join('\n')
 
     const totals = round.players
       .map((p) => {
         const net = settlement.netByPlayer[p.id] || 0
-        const sign = net >= 0 ? '+' : '-'
-        return `${p.name}: ${sign}$${Math.abs(net / 100).toFixed(2)}`
+        return { name: p.name, net }
+      })
+      .sort((a, b) => b.net - a.net)
+      .map((x) => {
+        const sign = x.net >= 0 ? '+' : '-'
+        return `${x.name} ${sign}$${Math.abs(x.net / 100).toFixed(2)}`
       })
       .join('\n')
 
-    return `Skins settlement (${stake} per skin)\n\nNet:\n${totals}\n\nSuggested payments:\n${lines || '(no payments)'}`
+    const lines = settlement.lines
+      .map((l) => `${l.from.name} → ${l.to.name}: $${(l.amountCents / 100).toFixed(2)}`)
+      .join('\n')
+
+    return `Golf Bets — Settlement\nRound: ${round.name || 'Skins'}\nSkins • ${stake}/skin • Through ${through}/18\n\nNet:\n${totals}\n\nSuggested payments:\n${lines || '(no payments)'}`
   }
 
   function statusText(): string {
@@ -377,13 +384,15 @@ export default function App() {
       const stake = stakeLabel(round.stakeCents || 0)
       const carry = skins.carryToNext
 
-      const standings = round.players
+      const sorted = round.players
         .map((p) => ({ name: p.name, skins: skins.skinsWon[p.id] || 0 }))
         .sort((a, b) => b.skins - a.skins)
-        .map((x) => `- ${x.name}: ${x.skins}`)
-        .join('\n')
 
-      return `Golf Bets — Skins status\nRound: ${round.name || 'Skins'}\nStake: ${stake}/skin\nThrough: ${through}/18\nCarry: ${carry} skin(s)\n\nSkins won:\n${standings}`
+      const leader = sorted[0]
+      const leaderLine = leader ? `Leader: ${leader.name} (${leader.skins})` : ''
+      const inline = sorted.map((x) => `${x.name} ${x.skins}`).join(' • ')
+
+      return `Skins — Through ${through}/18 — ${stake}/skin — Carry ${carry}\n${leaderLine}\n${inline}`
     }
 
     if (round.game === 'wolf' && wolf) {
@@ -394,7 +403,7 @@ export default function App() {
         .map((x) => `- ${x.name}: ${x.pts}`)
         .join('\n')
 
-      return `Golf Bets — Wolf status\nRound: ${round.name || 'Wolf'}\nPoints: ${pts}\nThrough: ${through}/18\n\nPoints:\n${standings}`
+      return `Wolf — Through ${through}/18 — ${pts}\n${standings.replaceAll('- ', '').replaceAll(': ', ' ')}`
     }
 
     return `Golf Bets status\nRound: ${round.name || 'Round'}\nThrough: ${through}/18`
@@ -440,8 +449,11 @@ export default function App() {
   }
 
   function headerPill() {
+    // On the game picker, avoid showing game-specific stake/progress.
+    if (screen === 'game') return 'Choose a game'
+
     const through = lastCompletedHole()
-    const progress = through > 0 ? `Through ${through}/18` : 'Through 0/18'
+    const progress = `Through ${through}/18`
 
     if (round.game === 'wolf') {
       return `${wolfLabel(round.wolfPointsPerHole)} • ${progress}`
@@ -986,6 +998,50 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {round.game === 'skins' && skins && (
+            <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
+              <div className="label">Hole story</div>
+              {(() => {
+                const hr = skins.holeResults.find((x) => x.hole === (quickHole as HoleNumber))
+                if (!hr) return <div className="small">No data for this hole yet.</div>
+
+                const entered = round.players.filter((p) => typeof round.strokesByHole[quickHole]?.[p.id] === 'number').length
+                const total = round.players.length
+
+                if (entered < total) {
+                  const atStake = 1 + (hr.carrySkins || 0)
+                  return (
+                    <div className="small">
+                      Enter scores ({entered}/{total}). If this hole has a winner: <b>{atStake}</b> skin(s) at stake.
+                    </div>
+                  )
+                }
+
+                if (hr.winnerId) {
+                  const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
+                  return (
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span className="pill">Winner: {winner}</span>
+                      <span className="pill">Skins: {hr.wonSkins}</span>
+                      <span className="pill">Carry resets</span>
+                    </div>
+                  )
+                }
+
+                // Tie
+                const before = hr.carrySkins || 0
+                const after = before + 1
+                return (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span className="pill">Result: tie</span>
+                    <span className="pill">Carry: {before} → {after}</span>
+                    <span className="pill">Next hole worth {after + 1} skin(s)</span>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
 
           {round.game === 'wolf' && wolfHole && (
             <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
