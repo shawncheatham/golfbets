@@ -689,7 +689,7 @@ export default function App() {
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
                 {round.game === 'skins' && skins && (
                   <div className="small">
-                    Carry: {skins.carryToNext} skin(s)
+                    Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
                     {(() => {
                       const leader = round.players
                         .slice()
@@ -836,13 +836,19 @@ export default function App() {
                       const hr = skins?.holeResults?.find((x) => x.hole === (hole as HoleNumber))
                       const winnerName = hr?.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : null
                       const isComplete = isHoleComplete(hole)
+                      const dollars = (cents: number) => (cents / 100) % 1 === 0 ? `$${(cents / 100).toFixed(0)}` : `$${(cents / 100).toFixed(2)}`
+                      const stake = round.stakeCents || 0
+                      const wonCents = hr?.wonSkins ? hr.wonSkins * stake : 0
+                      const nextCarrySkins = (hr?.carrySkins || 0) + 1
+                      const nextCarryCents = nextCarrySkins * stake
+
                       const label = !hr
                         ? '—'
                         : !isComplete
                           ? `incomplete (${round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length}/${round.players.length})`
                           : hr.winnerId
-                            ? `${winnerName || 'Winner'} (+${hr.wonSkins})`
-                            : `tie (carry → ${(hr.carrySkins || 0) + 1})`
+                            ? `${winnerName || 'Winner'} (+${hr.wonSkins}, ${dollars(wonCents)})`
+                            : `tie (carry → ${nextCarrySkins}, ${dollars(nextCarryCents)})`
 
                       return (
                         <div key={hole} className="holeRow skins">
@@ -954,7 +960,7 @@ export default function App() {
               <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
               {round.game === 'skins' && skins && (
                 <div className="small">
-                  Carry: {skins.carryToNext} skin(s)
+                  Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
                   {(() => {
                     const leader = round.players
                       .slice()
@@ -1043,10 +1049,12 @@ export default function App() {
 
                 if (hr.winnerId) {
                   const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
+                  const wonCents = hr.wonSkins * (round.stakeCents || 0)
                   return (
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                       <span className="pill">Winner: {winner}</span>
                       <span className="pill">Skins: {hr.wonSkins}</span>
+                      <span className="pill">Value: {stakeLabel(wonCents)}</span>
                       <span className="pill">Carry resets</span>
                     </div>
                   )
@@ -1055,11 +1063,14 @@ export default function App() {
                 // Tie
                 const before = hr.carrySkins || 0
                 const after = before + 1
+                const stake = round.stakeCents || 0
+                const nextSkins = after + 1
+                const nextCents = nextSkins * stake
                 return (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     <span className="pill">Result: tie</span>
                     <span className="pill">Carry: {before} → {after}</span>
-                    <span className="pill">Next hole worth {after + 1} skin(s)</span>
+                    <span className="pill">Next hole: {nextSkins} skin(s) ({stakeLabel(nextCents)})</span>
                   </div>
                 )
               })()}
