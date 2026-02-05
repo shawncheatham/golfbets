@@ -1527,53 +1527,56 @@ export default function App() {
             </div>
           )}
 
-          <div className="row">
-            {round.players.map((p) => {
-              const val = round.strokesByHole[quickHole]?.[p.id]
-              return (
-                <div key={p.id} className="incRow">
-                  <div>
-                    <div style={{ fontWeight: 800 }}>{p.name}</div>
-                  </div>
-                  <div className="quickScore">
-                    <div className="chipRow" aria-label={`${p.name} quick score buttons`}>
-                      {[3, 4, 5, 6, 7].map((n) => (
+          {round.game !== 'bbb' && (
+            <div className="row">
+              {round.players.map((p) => {
+                const val = round.strokesByHole[quickHole]?.[p.id]
+                return (
+                  <div key={p.id} className="incRow">
+                    <div>
+                      <div style={{ fontWeight: 800 }}>{p.name}</div>
+                    </div>
+                    <div className="quickScore">
+                      <div className="chipRow" aria-label={`${p.name} quick score buttons`}>
+                        {[3, 4, 5, 6, 7].map((n) => (
+                          <button
+                            key={n}
+                            className={`chip ${val === n ? 'active' : ''}`}
+                            onClick={() => setStroke(quickHole, p.id, String(n))}
+                            disabled={!!round.locked}
+                            type="button"
+                            title={`Set ${p.name} to ${n}`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="stepper">
+                        <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked} type="button">
+                          −
+                        </button>
+                        <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
                         <button
-                          key={n}
-                          className={`chip ${val === n ? 'active' : ''}`}
-                          onClick={() => setStroke(quickHole, p.id, String(n))}
+                          className="stepBtn"
+                          onClick={() => incStroke(quickHole, p.id, +1)}
                           disabled={!!round.locked}
                           type="button"
-                          title={`Set ${p.name} to ${n}`}
                         >
-                          {n}
+                          +
                         </button>
-                      ))}
+                      </div>
                     </div>
-
-                    <div className="stepper">
-                      <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked} type="button">
-                        −
-                      </button>
-                      <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
-                      <button
-                        className="stepBtn"
-                        onClick={() => incStroke(quickHole, p.id, +1)}
-                        disabled={!!round.locked}
-                        type="button"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <button className="btn ghost" disabled={!!round.locked} onClick={() => setStroke(quickHole, p.id, '')} title="Clear" type="button">
+                      Clear
+                    </button>
                   </div>
-                  <button className="btn ghost" disabled={!!round.locked} onClick={() => setStroke(quickHole, p.id, '')} title="Clear" type="button">
-                    Clear
-                  </button>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+          )}
 
-            <div className="footerActions">
+          <div className="footerActions">
               {quickHole > 1 ? (
                 <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
                   Prev hole
@@ -1639,7 +1642,6 @@ export default function App() {
                 Setup
               </button>
             </div>
-          </div>
         </div>
       )}
 
