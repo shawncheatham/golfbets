@@ -138,6 +138,25 @@ a { color: inherit; }
   color: var(--text);
   font-weight: 600;
   cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+  .chip { transition: none; }
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.20);
+}
+
+:root[data-theme='light'] .btn:not(:disabled):hover {
+  border-color: rgba(10, 20, 30, 0.22);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(0px);
 }
 
 .btn.primary {
@@ -359,6 +378,7 @@ a { color: inherit; }
   color: var(--text);
   font-weight: 800;
   cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 :root[data-theme='light'] .chip {
