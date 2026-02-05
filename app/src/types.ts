@@ -3,6 +3,10 @@ export type PlayerId = string;
 export type Player = {
   id: PlayerId;
   name: string;
+
+  // Optional profile stubs (for future; not surfaced in UI yet)
+  handicapIndex?: number;
+  tee?: string;
 };
 
 export type HoleNumber = number; // 1..18

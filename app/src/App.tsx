@@ -763,23 +763,43 @@ export default function App() {
               onClick={() => startNew('skins')}
               type="button"
             >
-              Skins
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <Icon as={GAME_META.skins.Icon} aria-hidden="true" boxSize={4} />
+                  {GAME_META.skins.label}
+                </span>
+                <span className="small">{GAME_META.skins.rules[0]}</span>
+              </span>
             </Button>
+
             <Button
               variant="primary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('wolf')}
               type="button"
             >
-              Wolf
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <Icon as={GAME_META.wolf.Icon} aria-hidden="true" boxSize={4} />
+                  {GAME_META.wolf.label}
+                </span>
+                <span className="small">{GAME_META.wolf.rules[0]}</span>
+              </span>
             </Button>
+
             <Button
               variant="primary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('bbb')}
               type="button"
             >
-              Bingo Bango Bongo
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <Icon as={GAME_META.bbb.Icon} aria-hidden="true" boxSize={4} />
+                  {GAME_META.bbb.label}
+                </span>
+                <span className="small">{GAME_META.bbb.rules[0]}</span>
+              </span>
             </Button>
           </SimpleGrid>
 
