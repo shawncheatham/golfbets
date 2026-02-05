@@ -17,6 +17,7 @@ import './App.css'
 import type { GameType, HoleNumber, Player, PlayerId, Round } from './types'
 import { computeSkins, stakeLabel } from './logic/skins'
 import { computeSettlement } from './logic/settlement'
+import { computeBBB, emptyHoleAwards, type BBBAwardType, bbbStatusText } from './logic/bbb'
 import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { computeWolfSettlement } from './logic/wolfSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
@@ -104,6 +105,14 @@ function randomWolfName(): string {
   return Math.random() < 0.35 ? `${base} ${pick(suffixes)}` : base
 }
 
+function randomBBBName(): string {
+  const adjectives = ['Bingo', 'Bango', 'Bongo', 'Dots', 'Green Light', 'Pin High', 'Roller', 'Back Nine']
+  const nouns = ['Classic', 'Open', 'Invitational', 'Showdown', 'Shootout', 'Rumble']
+  const suffixes = ['(No Gimmes)', '(Respectfully)', '(Allegedly)']
+  const base = `${pick(adjectives)} ${pick(nouns)}`
+  return Math.random() < 0.35 ? `${base} ${pick(suffixes)}` : base
+}
+
 function createEmptySkinsRound(): Round {
   return {
     id: uid('round'),
@@ -136,6 +145,21 @@ function createEmptyWolfRound(): Round {
       { id: uid('p'), name: 'Player 4' },
     ],
     strokesByHole: {},
+    createdAt: Date.now(),
+  }
+}
+
+function createEmptyBBBRound(): Round {
+  return {
+    id: uid('round'),
+    game: 'bbb',
+    name: randomBBBName(),
+    players: [
+      { id: uid('p'), name: 'Player 1' },
+      { id: uid('p'), name: 'Player 2' },
+    ],
+    strokesByHole: {},
+    bbbAwardsByHole: {},
     createdAt: Date.now(),
   }
 }
@@ -177,6 +201,7 @@ export default function App() {
 
   const skins = useMemo(() => (round.game === 'skins' ? computeSkins(round) : null), [round])
   const settlement = useMemo(() => (round.game === 'skins' ? computeSettlement(round) : null), [round])
+  const bbb = useMemo(() => (round.game === 'bbb' ? computeBBB(round) : null), [round])
   const wolf = useMemo(() => (round.game === 'wolf' ? computeWolf(round) : null), [round])
   const wolfSettlement = useMemo(() => {
     if (round.game !== 'wolf' || !wolf) return null
@@ -191,6 +216,9 @@ export default function App() {
     if (!allPlayersHaveNames) return false
     if (round.game === 'skins') {
       return round.players.length >= 2 && round.players.length <= 4 && (round.stakeCents || 0) > 0
+    }
+    if (round.game === 'bbb') {
+      return round.players.length >= 2 && round.players.length <= 4
     }
     // wolf v1: 4 only
     const pts = round.wolfPointsPerHole || 0
@@ -241,6 +269,7 @@ export default function App() {
 
   function setStroke(hole: number, playerId: PlayerId, v: string) {
     if (round.locked) return
+    if (round.game === 'bbb') return
 
     const n = v.trim() === '' ? null : Number(v)
     if (n !== null && (!Number.isFinite(n) || n < 0 || !Number.isInteger(n))) return
@@ -286,6 +315,7 @@ export default function App() {
 
   function incStroke(hole: number, playerId: PlayerId, delta: number) {
     if (round.locked) return
+    if (round.game === 'bbb') return
 
     setRound((r) => {
       const holeRec = r.strokesByHole[hole] || {}
@@ -309,6 +339,14 @@ export default function App() {
   const [quickHole, setQuickHole] = useState<number>(1)
 
   const isHoleComplete = (h: number) => {
+    if (round.game === 'bbb') {
+      // Consider a BBB hole “complete” if all 3 awards are assigned (or explicitly None).
+      const a = round.bbbAwardsByHole?.[h as HoleNumber]
+      if (!a) return false
+      // Presence of record isn’t enough; require explicit values (null is allowed).
+      return ['bingo', 'bango', 'bongo'].every((k) => k in a)
+    }
+
     const by = round.strokesByHole[h]
     return round.players.every((p) => typeof by?.[p.id] === 'number')
   }
@@ -327,6 +365,19 @@ export default function App() {
 
   function clearHole(hole: number) {
     if (round.locked) return
+
+    if (round.game === 'bbb') {
+      if (!confirm(`Clear all awards for hole ${hole}?`)) return
+      setRound((r) => {
+        if (r.game !== 'bbb') return r
+        const cur = r.bbbAwardsByHole || {}
+        const next = { ...cur }
+        delete next[hole as HoleNumber]
+        return { ...r, bbbAwardsByHole: next }
+      })
+      return
+    }
+
     if (!confirm(`Clear all scores for hole ${hole}?`)) return
 
     setRound((r) => {
@@ -361,12 +412,12 @@ export default function App() {
     if (!confirm('Start a new round? This will clear the current round on screen (saved rounds remain in Recent).')) {
       return
     }
-    setRound(round.game === 'wolf' ? createEmptyWolfRound() : createEmptySkinsRound())
+    setRound(round.game === 'wolf' ? createEmptyWolfRound() : round.game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
     setScreen('setup')
   }
 
   function startNew(game: GameType) {
-    setRound(game === 'wolf' ? createEmptyWolfRound() : createEmptySkinsRound())
+    setRound(game === 'wolf' ? createEmptyWolfRound() : game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
     setScreen('setup')
   }
 
@@ -455,6 +506,11 @@ export default function App() {
       return `Wolf — Through ${through}/18 — ${pts}${money}\n${leaderLine}\n${inline}`
     }
 
+    if (round.game === 'bbb' && bbb) {
+      // Use BBB's own definition of through-hole progress.
+      return bbbStatusText(round.players, bbb.through, bbb.pointsByPlayer)
+    }
+
     return `Golf Bets status\nRound: ${round.name || 'Round'}\nThrough: ${through}/18`
   }
 
@@ -538,6 +594,25 @@ export default function App() {
     })
   }
 
+  function setBBBAwardForHole(hole: HoleNumber, award: BBBAwardType, winnerId: PlayerId | null) {
+    if (round.locked) return
+    setRound((r) => {
+      if (r.game !== 'bbb') return r
+      const cur = r.bbbAwardsByHole || {}
+      const holeRec = cur[hole] || emptyHoleAwards()
+      return {
+        ...r,
+        bbbAwardsByHole: {
+          ...cur,
+          [hole]: {
+            ...holeRec,
+            [award]: winnerId,
+          },
+        },
+      }
+    })
+  }
+
   const wolfHole = useMemo(() => {
     if (round.game !== 'wolf') return null
     return wolfForHole(round, quickHole as HoleNumber)
@@ -574,7 +649,7 @@ export default function App() {
             Choose a game
           </Text>
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
             <Button
               variant="primary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
@@ -590,6 +665,14 @@ export default function App() {
               type="button"
             >
               Wolf
+            </Button>
+            <Button
+              variant="primary"
+              rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
+              onClick={() => startNew('bbb')}
+              type="button"
+            >
+              Bingo Bango Bongo
             </Button>
           </SimpleGrid>
 
@@ -652,11 +735,20 @@ export default function App() {
                   >
                     🎲 Reroll
                   </button>
-                ) : (
+                ) : round.game === 'wolf' ? (
                   <button
                     className="btn ghost iconBtn"
                     type="button"
                     onClick={() => setRound((r) => ({ ...r, name: randomWolfName() }))}
+                    title="Reroll name"
+                  >
+                    🎲 Reroll
+                  </button>
+                ) : (
+                  <button
+                    className="btn ghost iconBtn"
+                    type="button"
+                    onClick={() => setRound((r) => ({ ...r, name: randomBBBName() }))}
                     title="Reroll name"
                   >
                     🎲 Reroll
@@ -683,7 +775,7 @@ export default function App() {
                 />
                 <div className="small">Gross skins. Carryovers on ties. Tie after 18 remains a tie.</div>
               </div>
-            ) : (
+            ) : round.game === 'wolf' ? (
               <div>
                 <div className="label">Points per hole</div>
                 <input
@@ -704,9 +796,14 @@ export default function App() {
                   value={dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)}
                   onChange={(e) => setRound((r) => ({ ...r, wolfDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
                   inputMode="decimal"
-                  placeholder="" 
+                  placeholder=""
                 />
                 <div className="small">Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.</div>
+              </div>
+            ) : (
+              <div>
+                <div className="label">Points</div>
+                <div className="small">BBB (v1): award-entry. Pick Bingo/Bango/Bongo winners per hole (or None).</div>
               </div>
             )}
           </div>
@@ -1133,6 +1230,15 @@ export default function App() {
                   })()}
                 </div>
               )}
+              {round.game === 'bbb' && bbb && (
+                <div className="small">
+                  BBB • Through {bbb.through}/18 • {round.players
+                    .slice()
+                    .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
+                    .map((p) => `${p.name} ${bbb.pointsByPlayer[p.id] || 0}`)
+                    .join(' • ')}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               {round.locked ? (
@@ -1223,8 +1329,57 @@ export default function App() {
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     <span className="pill">Result: tie</span>
                     <span className="pill">Carry: {before} → {after}</span>
+                    <span className="pill">Carry resets</span>
                     <span className="pill">Next hole: {nextSkins} skin(s) ({stakeLabel(nextCents)})</span>
                   </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {round.game === 'bbb' && (
+            <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
+              <div className="label">Hole awards</div>
+              <div className="small">Pick winners for Bingo/Bango/Bongo (or choose None). No ties in v1.</div>
+              <div style={{ height: 10 }} />
+              {(() => {
+                const hole = quickHole as HoleNumber
+                const awards = round.bbbAwardsByHole?.[hole] || emptyHoleAwards()
+
+                const renderAward = (award: BBBAwardType, label: string) => (
+                  <div style={{ marginBottom: 10 }}>
+                    <div className="small" style={{ fontWeight: 800, marginBottom: 6 }}>{label}</div>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        className={`chip ${awards[award] === null ? 'active' : ''}`}
+                        onClick={() => setBBBAwardForHole(hole, award, null)}
+                        disabled={!!round.locked}
+                        type="button"
+                        title="No winner / unknown"
+                      >
+                        None
+                      </button>
+                      {round.players.map((p) => (
+                        <button
+                          key={p.id}
+                          className={`chip ${awards[award] === p.id ? 'active' : ''}`}
+                          onClick={() => setBBBAwardForHole(hole, award, p.id)}
+                          disabled={!!round.locked}
+                          type="button"
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+
+                return (
+                  <>
+                    {renderAward('bingo', 'Bingo (first on green)')}
+                    {renderAward('bango', 'Bango (closest to pin)')}
+                    {renderAward('bongo', 'Bongo (first to hole out)')}
+                  </>
                 )
               })()}
             </div>
