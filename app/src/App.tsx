@@ -22,6 +22,7 @@ import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { computeWolfSettlement } from './logic/wolfSettlement'
 import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
+import { track } from './logic/track'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
@@ -376,6 +377,7 @@ export default function App() {
 
     if (round.game === 'bbb') {
       if (!confirm(`Clear all awards for hole ${hole}?`)) return
+      track('bbb_hole_clear', { hole })
       setRound((r) => {
         if (r.game !== 'bbb') return r
         const cur = r.bbbAwardsByHole || {}
@@ -425,6 +427,7 @@ export default function App() {
   }
 
   function startNew(game: GameType) {
+    track('round_new', { game })
     setRound(game === 'wolf' ? createEmptyWolfRound() : game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
     setScreen('setup')
   }
@@ -525,6 +528,7 @@ export default function App() {
   async function copyStatus() {
     try {
       await navigator.clipboard.writeText(statusText())
+      track('share_status', { game: round.game })
       alert('Copied status to clipboard')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -552,6 +556,7 @@ export default function App() {
   async function copyWolfSettlement() {
     try {
       await navigator.clipboard.writeText(wolfSettlementText())
+      track('share_settlement', { game: 'wolf', centsPerPoint: round.wolfDollarsPerPointCents || 0 })
       alert('Copied settlement (ready to paste in the group chat)')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -579,6 +584,7 @@ export default function App() {
   async function copyBBBSettlement() {
     try {
       await navigator.clipboard.writeText(bbbSettlementText())
+      track('share_settlement', { game: 'bbb', centsPerPoint: round.bbbDollarsPerPointCents || 0 })
       alert('Copied settlement (ready to paste in the group chat)')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -593,12 +599,14 @@ export default function App() {
   }
 
   function lockRound(andGoToSettlement = false) {
+    track('round_lock', { game: round.game, screen, andGoToSettlement })
     setRound((r) => ({ ...r, locked: true }))
     if (andGoToSettlement) setScreen('settlement')
   }
 
   function unlockRound() {
     if (!confirm('Unlock round? This allows edits and may change standings/settlement.')) return
+    track('round_unlock', { game: round.game, screen })
     setRound((r) => ({ ...r, locked: false }))
   }
 
@@ -631,6 +639,7 @@ export default function App() {
 
   function setBBBAwardForHole(hole: HoleNumber, award: BBBAwardType, winnerId: PlayerId | null) {
     if (round.locked) return
+    track('bbb_award_set', { hole, award, winnerId })
     setRound((r) => {
       if (r.game !== 'bbb') return r
       const cur = r.bbbAwardsByHole || {}
@@ -845,7 +854,7 @@ export default function App() {
                   inputMode="decimal"
                   placeholder=""
                 />
-                <div className="small">BBB (v1): award-entry. Pick Bingo/Bango/Bongo winners per hole (or None). Settlement uses points × $/pt when set.</div>
+                <div className="small">Settlement uses points × $/pt when set.</div>
               </div>
             )}
           </div>
@@ -856,7 +865,7 @@ export default function App() {
           <div className="small">
             {round.game === 'wolf'
               ? 'Wolf is 4 players only (v1). Wolf rotates each hole. Partner is chosen per hole in Quick mode.'
-              : 'Start with 2. Add up to 4.'}
+              : ''}
           </div>
 
           <div className="row">
@@ -888,15 +897,31 @@ export default function App() {
             ))}
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {round.game === 'skins' && (
+              {round.game !== 'wolf' && (
                 <button className="btn" onClick={addPlayer} disabled={round.players.length >= 4} type="button">
                   + Add player
                 </button>
               )}
-              <button className="btn primary" disabled={!canStart} onClick={() => setScreen('quick')} type="button">
+              <button
+                className="btn primary"
+                disabled={!canStart}
+                onClick={() => {
+                  track('round_start', { game: round.game, playerCount: round.players.length })
+                  setScreen('quick')
+                }}
+                type="button"
+              >
                 Start round →
               </button>
-              <button className="btn ghost" disabled={!canStart} onClick={() => setScreen('holes')} type="button">
+              <button
+                className="btn ghost"
+                disabled={!canStart}
+                onClick={() => {
+                  track('nav_screen', { from: 'setup', to: 'holes', game: round.game })
+                  setScreen('holes')
+                }}
+                type="button"
+              >
                 Grid view
               </button>
               <button className="btn ghost" onClick={resetToGamePicker} type="button">
