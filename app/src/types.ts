@@ -7,7 +7,13 @@ export type Player = {
 
 export type HoleNumber = number; // 1..18
 
-export type GameType = 'skins' | 'wolf';
+export type GameType = 'skins' | 'wolf' | 'bbb';
+
+export type BBBHoleAwards = {
+  bingo: PlayerId | null;
+  bango: PlayerId | null;
+  bongo: PlayerId | null;
+};
 
 export type Round = {
   id: string;
@@ -23,6 +29,10 @@ export type Round = {
   wolfDollarsPerPointCents?: number; // optional: $ per point (money common)
   wolfStartingIndex?: number; // 0..3 (which player is Wolf on hole 1)
   wolfPartnerByHole?: Record<HoleNumber, PlayerId | null>; // partner id, or null for lone wolf
+
+  // BBB (award-entry)
+  // Winner for each award per hole; use null when unknown/unclear.
+  bbbAwardsByHole?: Record<HoleNumber, BBBHoleAwards>;
 
   players: Player[];
   strokesByHole: Record<HoleNumber, Record<PlayerId, number | null>>;
