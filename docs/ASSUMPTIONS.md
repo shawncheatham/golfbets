@@ -68,3 +68,9 @@ We stop or pivot if we observe:
 - Expected signal: Users understand pairing + lone wolf behavior without coaching.
 - If true: Keep Wolf in the picker and harden parity.
 - If false: Gate Wolf behind “advanced” or tighten the flow.
+
+4) Hypothesis: BBB (award-entry) is faster than strokes entry and still trusted.
+- Test: Run 1 on-course session using BBB where users pick Bingo/Bango/Bongo winners per hole (or None) and share status mid-round.
+- Expected signal: Users can keep up without slowing play; minimal disputes about awarding.
+- If true: Add $/pt settlement and promote BBB from Beta.
+- If false: Add tie/clarity affordances or deprioritize BBB.
