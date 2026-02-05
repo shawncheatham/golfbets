@@ -10,7 +10,7 @@ import {
   Text,
   useColorMode,
 } from '@chakra-ui/react'
-import { ChevronRight, Moon, Sun } from 'lucide-react'
+import { BookOpen, ChevronRight, Dice5, Moon, Sun, Trophy, Users } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -25,6 +25,77 @@ import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 import { track } from './logic/track'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
+
+type GameMeta = {
+  label: string
+  short: string
+  Icon: typeof Sun
+  rules: string[]
+}
+
+const GAME_META: Record<GameType, GameMeta> = {
+  skins: {
+    label: 'Skins',
+    short: 'Skins',
+    Icon: Dice5,
+    rules: [
+      'Each hole is worth 1 skin (+ carries).',
+      'Lowest score wins the skin. Ties carry to the next hole.',
+      'Winner collects stake from each opponent.',
+    ],
+  },
+  wolf: {
+    label: 'Wolf',
+    short: 'Wolf',
+    Icon: Users,
+    rules: [
+      'Wolf rotates each hole. Choose partner (or Lone).',
+      'Best-ball teams compete each hole for points.',
+      'Optional: $/pt settlement based on points.',
+    ],
+  },
+  bbb: {
+    label: 'Bingo Bango Bongo',
+    short: 'BBB',
+    Icon: Trophy,
+    rules: [
+      'Each hole has 3 awards: Bingo (first on green), Bango (closest), Bongo (first in).',
+      'Award-entry only (no strokes). 1 point per award won.',
+      'Optional: $/pt settlement based on points.',
+    ],
+  },
+}
+
+function GameRules({ game, defaultOpen = false }: { game: GameType; defaultOpen?: boolean }) {
+  const meta = GAME_META[game]
+  const [open, setOpen] = useState<boolean>(defaultOpen)
+
+  return (
+    <div className="rulesCard">
+      <div className="rulesHeader">
+        <button
+          className="btn ghost miniBtn"
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          title={open ? 'Hide rules' : 'Show rules'}
+        >
+          <BookOpen size={16} aria-hidden="true" />
+          Rules
+        </button>
+        <span className="small">{meta.short}</span>
+      </div>
+
+      {open && (
+        <ul className="rulesList">
+          {meta.rules.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 const THEME_KEY = 'rubislabs:golf-bets:theme:v1'
 
@@ -418,14 +489,6 @@ export default function App() {
     setScreen('game')
   }
 
-  function resetSameGame() {
-    if (!confirm('Start a new round? This will clear the current round on screen (saved rounds remain in Recent).')) {
-      return
-    }
-    setRound(round.game === 'wolf' ? createEmptyWolfRound() : round.game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
-    setScreen('setup')
-  }
-
   function startNew(game: GameType) {
     track('round_new', { game })
     setRound(game === 'wolf' ? createEmptyWolfRound() : game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
@@ -799,12 +862,16 @@ export default function App() {
                   </button>
                 )}
               </div>
+
               <input
                 className="input"
                 value={round.name}
                 onChange={(e) => setRound((r) => ({ ...r, name: e.target.value }))}
                 placeholder="Saturday skins"
               />
+
+              <div style={{ height: 12 }} />
+              <GameRules game={round.game} defaultOpen={false} />
             </div>
 
             {round.game === 'skins' ? (
@@ -925,10 +992,7 @@ export default function App() {
                 Grid view
               </button>
               <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                Change game
-              </button>
-              <button className="btn ghost" onClick={resetSameGame} type="button">
-                New round
+                New game
               </button>
             </div>
           </div>
@@ -1320,7 +1384,12 @@ export default function App() {
         <div className="card">
           <div className="quickTop">
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
+              <div style={{ fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span>{round.name || GAME_META[round.game].short}</span>
+                <button className="btn ghost miniBtn" onClick={() => setScreen('settlement')} type="button" title="Open summary">
+                  Summary →
+                </button>
+              </div>
               {round.game === 'skins' && skins && (
                 <div className="small">
                   Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
@@ -1369,18 +1438,7 @@ export default function App() {
               )}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              {round.locked ? (
-                <>
-                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
-                  <button className="btn ghost" onClick={unlockRound} type="button">
-                    Unlock
-                  </button>
-                </>
-              ) : (
-                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                  Lock round
-                </button>
-              )}
+              {round.locked && <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>}
               <div className="holePicker">
                 {quickHole > 1 ? (
                   <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
@@ -1666,12 +1724,28 @@ export default function App() {
               <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
                 Setup
               </button>
+
+              {round.locked ? (
+                <button className="btn ghost" onClick={unlockRound} type="button">
+                  Unlock
+                </button>
+              ) : (
+                <button className="btn ghost" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                  Lock
+                </button>
+              )}
+
+              <button className="btn ghost" onClick={resetToGamePicker} type="button">
+                New game
+              </button>
             </div>
         </div>
       )}
 
       {screen === 'settlement' && round.game === 'skins' && settlement && (
         <div className="card">
+          <GameRules game={round.game} defaultOpen={false} />
+          <div style={{ height: 12 }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div className="label">Settlement</div>
@@ -1679,18 +1753,6 @@ export default function App() {
               <div className="small">Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              {round.locked ? (
-                <>
-                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
-                  <button className="btn ghost" onClick={unlockRound} type="button">
-                    Unlock
-                  </button>
-                </>
-              ) : (
-                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                  Lock round
-                </button>
-              )}
               <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
                 Quick mode
               </button>
@@ -1711,8 +1773,8 @@ export default function App() {
               <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
                 Share status
               </button>
-              <button className="btn ghost" onClick={resetSameGame} type="button">
-                New round
+              <button className="btn ghost" onClick={resetToGamePicker} type="button">
+                New game
               </button>
             </div>
           </div>
@@ -1741,7 +1803,7 @@ export default function App() {
             </div>
 
             <div>
-              <div className="label">Suggested payments</div>
+              <div className="label">Money (suggested payments)</div>
               <table className="table">
                 <thead>
                   <tr>
@@ -1790,6 +1852,8 @@ export default function App() {
 
       {screen === 'settlement' && round.game === 'bbb' && bbb && (
         <div className="card">
+          <GameRules game={round.game} defaultOpen={false} />
+          <div style={{ height: 12 }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div className="label">Standings</div>
@@ -1797,18 +1861,6 @@ export default function App() {
               <div className="small">Bingo Bango Bongo • award-entry</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              {round.locked ? (
-                <>
-                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
-                  <button className="btn ghost" onClick={unlockRound} type="button">
-                    Unlock
-                  </button>
-                </>
-              ) : (
-                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                  Lock round
-                </button>
-              )}
               <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
                 Share status
               </button>
@@ -1823,8 +1875,8 @@ export default function App() {
               <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
                 ← Back to holes
               </button>
-              <button className="btn ghost" onClick={resetSameGame} type="button">
-                New round
+              <button className="btn ghost" onClick={resetToGamePicker} type="button">
+                New game
               </button>
             </div>
           </div>
@@ -1849,7 +1901,7 @@ export default function App() {
           {bbbSettlement && (
             <>
               <div style={{ height: 14 }} />
-              <div className="label">Suggested payments</div>
+              <div className="label">Money (suggested payments)</div>
               <table className="table">
                 <thead>
                   <tr>
@@ -1886,6 +1938,8 @@ export default function App() {
 
       {screen === 'settlement' && round.game === 'wolf' && wolf && (
         <div className="card">
+          <GameRules game={round.game} defaultOpen={false} />
+          <div style={{ height: 12 }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div>
               <div className="label">Standings</div>
@@ -1893,18 +1947,6 @@ export default function App() {
               <div className="small">{wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x</div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              {round.locked ? (
-                <>
-                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
-                  <button className="btn ghost" onClick={unlockRound} type="button">
-                    Unlock
-                  </button>
-                </>
-              ) : (
-                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                  Lock round
-                </button>
-              )}
               <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
                 Share status
               </button>
@@ -1919,8 +1961,8 @@ export default function App() {
               <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
                 ← Back to holes
               </button>
-              <button className="btn ghost" onClick={resetSameGame} type="button">
-                New round
+              <button className="btn ghost" onClick={resetToGamePicker} type="button">
+                New game
               </button>
             </div>
           </div>
@@ -1945,7 +1987,7 @@ export default function App() {
           {wolfSettlement && (
             <>
               <div style={{ height: 14 }} />
-              <div className="label">Suggested payments</div>
+              <div className="label">Money (suggested payments)</div>
               <table className="table">
                 <thead>
                   <tr>
