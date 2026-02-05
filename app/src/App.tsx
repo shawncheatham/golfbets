@@ -874,7 +874,7 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div className="label">Round</div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : 'Skins')}</div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : round.game === 'bbb' ? 'BBB' : 'Skins')}</div>
                 {round.game === 'skins' && skins && (
                   <div className="small">
                     Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
@@ -893,6 +893,15 @@ export default function App() {
                       round.players
                         .slice()
                         .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))[0]?.name
+                    }
+                  </div>
+                )}
+                {round.game === 'bbb' && bbb && (
+                  <div className="small">
+                    Points leader: {
+                      round.players
+                        .slice()
+                        .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))[0]?.name
                     }
                   </div>
                 )}
@@ -925,7 +934,7 @@ export default function App() {
                   </button>
                 )}
                 <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
-                  {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
+                  {round.game === 'wolf' || round.game === 'bbb' ? 'Standings →' : 'Settlement →'}
                 </button>
               </div>
             </div>
@@ -971,7 +980,54 @@ export default function App() {
 
             <div className="holes">
               <div className="holeGrid" style={{ minWidth: round.game === 'wolf' ? 980 : 720 }}>
-                {round.game === 'wolf' ? (
+                {round.game === 'bbb' ? (
+                  <>
+                    <div className="holeRow skins header">
+                      <div className="holeCell">
+                        <span className="small">Hole</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Bingo</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Bango</span>
+                      </div>
+                      <div className="holeCell">
+                        <span className="small">Bongo</span>
+                      </div>
+                      <div className="holeCell" style={{ textAlign: 'right' }}>
+                        <span className="small">Done</span>
+                      </div>
+                    </div>
+
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                      const h = hole as HoleNumber
+                      const a = round.bbbAwardsByHole?.[h]
+
+                      const nameFor = (pid: PlayerId | null | undefined) => {
+                        if (pid === null) return 'None'
+                        if (!pid) return '—'
+                        return round.players.find((p) => p.id === pid)?.name || '—'
+                      }
+
+                      const done = !!a && ['bingo', 'bango', 'bongo'].every((k) => k in a)
+
+                      return (
+                        <div key={hole} className="holeRow skins">
+                          <div className="holeCell">
+                            <button className="btn ghost" type="button" onClick={() => { setQuickHole(hole); setScreen('quick') }}>
+                              {hole}
+                            </button>
+                          </div>
+                          <div className="holeCell">{nameFor(a?.bingo)}</div>
+                          <div className="holeCell">{nameFor(a?.bango)}</div>
+                          <div className="holeCell">{nameFor(a?.bongo)}</div>
+                          <div className="holeCell" style={{ textAlign: 'right' }}>{done ? '✅' : '—'}</div>
+                        </div>
+                      )
+                    })}
+                  </>
+                ) : round.game === 'wolf' ? (
                   <>
                     <div className="holeRow wolf header">
                       <div className="holeCell">
