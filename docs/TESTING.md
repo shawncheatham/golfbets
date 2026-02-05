@@ -32,10 +32,24 @@ This project uses the RubisLabs **Ship-Fast Testing Playbook**.
 
 ---
 
+## UI polish checklist (quick)
+Run this anytime we change styling/components.
+
+- [ ] Contrast: text is readable in **light + dark** (no low-contrast gray-on-gray)
+- [ ] Colorblind-safe: meaning is not conveyed by color alone (icons/text patterns present)
+- [ ] Focus states: keyboard focus ring is visible on buttons/inputs (Tab through)
+- [ ] Tap targets: key controls are comfortably tappable on phone (no tiny chips)
+- [ ] Button hierarchy: one clear primary action per screen; secondary actions are visually quieter
+- [ ] Inputs: consistent height/radius; placeholder legible; error/confirm prompts don’t feel jarring
+- [ ] Motion: subtle transitions only (150–200ms); respects reduced motion
+- [ ] Icon consistency: single icon set (Lucide); consistent stroke weight/size
+
+---
+
 ## Manual smoke checklist (edit per project)
-1) 
-2) 
-3) 
+1) Create a Skins round, enter holes 1–3 in Quick mode
+2) Share status, then share settlement after locking
+3) Repeat in dark mode
 
 ## Regression rules
 - Any bug that matters must produce a regression test.
