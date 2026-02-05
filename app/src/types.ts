@@ -31,6 +31,7 @@ export type Round = {
   wolfPartnerByHole?: Record<HoleNumber, PlayerId | null>; // partner id, or null for lone wolf
 
   // BBB (award-entry)
+  bbbDollarsPerPointCents?: number; // optional: $ per point
   // Winner for each award per hole; use null when unknown/unclear.
   bbbAwardsByHole?: Record<HoleNumber, BBBHoleAwards>;
 

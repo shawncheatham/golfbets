@@ -20,6 +20,7 @@ import { computeSettlement } from './logic/settlement'
 import { computeBBB, emptyHoleAwards, type BBBAwardType, bbbStatusText } from './logic/bbb'
 import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { computeWolfSettlement } from './logic/wolfSettlement'
+import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
@@ -209,6 +210,13 @@ export default function App() {
     if (cents <= 0) return null
     return computeWolfSettlement(round.players, wolf.pointsByPlayer, cents)
   }, [round, wolf])
+
+  const bbbSettlement = useMemo(() => {
+    if (round.game !== 'bbb' || !bbb) return null
+    const cents = round.bbbDollarsPerPointCents || 0
+    if (cents <= 0) return null
+    return computeBBBSettlement(round.players, bbb.pointsByPlayer, cents)
+  }, [round, bbb])
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
 
@@ -550,6 +558,33 @@ export default function App() {
     }
   }
 
+  function bbbSettlementText(): string {
+    if (round.game !== 'bbb' || !bbb || !bbbSettlement) return ''
+    const through = bbb.through
+    const dollarsPerPoint = dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)
+
+    const pts = round.players
+      .map((p) => ({ name: p.name, pts: bbb.pointsByPlayer[p.id] || 0 }))
+      .sort((a, b) => b.pts - a.pts)
+      .map((x) => `${x.name} ${x.pts}`)
+      .join(' • ')
+
+    const lines = bbbSettlement.lines
+      .map((l) => `${l.from.name} → ${l.to.name}: $${(l.amountCents / 100).toFixed(2)}`)
+      .join('\n')
+
+    return `Golf Bets — BBB settlement\nRound: ${round.name || 'BBB'}\nThrough ${through}/18 • $${dollarsPerPoint}/pt\n\nPoints:\n${pts}\n\nSuggested payments:\n${lines || '(no payments)'}`
+  }
+
+  async function copyBBBSettlement() {
+    try {
+      await navigator.clipboard.writeText(bbbSettlementText())
+      alert('Copied settlement (ready to paste in the group chat)')
+    } catch {
+      alert('Could not copy. You can manually select and copy the text.')
+    }
+  }
+
   function isRoundComplete(): boolean {
     for (let h = 1; h <= 18; h++) {
       if (!isHoleComplete(h)) return false
@@ -802,8 +837,15 @@ export default function App() {
               </div>
             ) : (
               <div>
-                <div className="label">Points</div>
-                <div className="small">BBB (v1): award-entry. Pick Bingo/Bango/Bongo winners per hole (or None).</div>
+                <div className="label">$ per point (optional)</div>
+                <input
+                  className="input"
+                  value={dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)}
+                  onChange={(e) => setRound((r) => ({ ...r, bbbDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
+                  inputMode="decimal"
+                  placeholder=""
+                />
+                <div className="small">BBB (v1): award-entry. Pick Bingo/Bango/Bongo winners per hole (or None). Settlement uses points × $/pt when set.</div>
               </div>
             )}
           </div>
@@ -930,6 +972,11 @@ export default function App() {
                 </button>
                 {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
                   <button className={round.locked ? 'btn primary' : 'btn'} onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                    Share settlement
+                  </button>
+                )}
+                {round.game === 'bbb' && bbbSettlement && (round.locked || isRoundComplete()) && (
+                  <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyBBBSettlement} type="button" title="Copy the settlement text to paste in the group chat">
                     Share settlement
                   </button>
                 )}
@@ -1711,6 +1758,102 @@ export default function App() {
               Back
             </button>
           </div>
+        </div>
+      )}
+
+      {screen === 'settlement' && round.game === 'bbb' && bbb && (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div className="label">Standings</div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'BBB'}</div>
+              <div className="small">Bingo Bango Bongo • award-entry</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {round.locked ? (
+                <>
+                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
+                  <button className="btn ghost" onClick={unlockRound} type="button">
+                    Unlock
+                  </button>
+                </>
+              ) : (
+                <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                  Lock round
+                </button>
+              )}
+              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                Share status
+              </button>
+              {bbbSettlement && (
+                <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                  Share settlement
+                </button>
+              )}
+              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
+                Quick mode
+              </button>
+              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
+                ← Back to holes
+              </button>
+              <button className="btn ghost" onClick={resetSameGame} type="button">
+                New round
+              </button>
+            </div>
+          </div>
+
+          <div style={{ height: 14 }} />
+
+          <div className="label">Points by player</div>
+          <table className="table">
+            <tbody>
+              {round.players
+                .slice()
+                .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
+                .map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.name}</td>
+                    <td style={{ textAlign: 'right' }}>{bbb.pointsByPlayer[p.id] || 0}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+
+          {bbbSettlement && (
+            <>
+              <div style={{ height: 14 }} />
+              <div className="label">Suggested payments</div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th style={{ textAlign: 'right' }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bbbSettlement.lines.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="small">No payments needed.</td>
+                    </tr>
+                  ) : (
+                    bbbSettlement.lines.map((l, idx) => (
+                      <tr key={idx}>
+                        <td>{l.from.name}</td>
+                        <td>{l.to.name}</td>
+                        <td style={{ textAlign: 'right' }}>${(l.amountCents / 100).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <div className="small">Based on ${dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)} per point.</div>
+            </>
+          )}
+
+          <div style={{ height: 14 }} />
+
+          <div className="small">Tip: in Quick mode, set Bingo/Bango/Bongo winners (or None) for each hole.</div>
         </div>
       )}
 
