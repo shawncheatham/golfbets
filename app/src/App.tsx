@@ -10,10 +10,7 @@ import {
   Text,
   useColorMode,
 } from '@chakra-ui/react'
-import { BookOpen, ChevronRight, Moon, Sun } from 'lucide-react'
-import gameSkinsIcon from './assets/game-skins.png'
-import gameWolfIcon from './assets/game-wolf.png'
-import gameBBBIcon from './assets/game-bbb.png'
+import { BookOpen, ChevronRight, Dice5, Moon, Sun, Trophy, Users } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -32,7 +29,7 @@ type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 type GameMeta = {
   label: string
   short: string
-  iconSrc: string
+  Icon: typeof Sun
   rules: string[]
 }
 
@@ -40,7 +37,7 @@ const GAME_META: Record<GameType, GameMeta> = {
   skins: {
     label: 'Skins',
     short: 'Skins',
-    iconSrc: gameSkinsIcon,
+    Icon: Dice5,
     rules: [
       'Each hole is worth 1 skin (+ carries).',
       'Lowest score wins the skin. Ties carry to the next hole.',
@@ -50,7 +47,7 @@ const GAME_META: Record<GameType, GameMeta> = {
   wolf: {
     label: 'Wolf',
     short: 'Wolf',
-    iconSrc: gameWolfIcon,
+    Icon: Users,
     rules: [
       'Wolf rotates each hole. Choose partner (or Lone).',
       'Best-ball teams compete each hole for points.',
@@ -60,7 +57,7 @@ const GAME_META: Record<GameType, GameMeta> = {
   bbb: {
     label: 'Bingo Bango Bongo',
     short: 'BBB',
-    iconSrc: gameBBBIcon,
+    Icon: Trophy,
     rules: [
       'Each hole has 3 awards: Bingo (first on green), Bango (closest), Bongo (first in).',
       'Award-entry only (no strokes). 1 point per award won.',
@@ -767,7 +764,7 @@ export default function App() {
               type="button"
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <img src={GAME_META.skins.iconSrc} alt="" width={24} height={24} style={{ display: 'block' }} />
+                <Icon as={GAME_META.skins.Icon} aria-hidden="true" boxSize={4} />
                 {GAME_META.skins.label}
               </span>
             </Button>
@@ -779,7 +776,7 @@ export default function App() {
               type="button"
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <img src={GAME_META.wolf.iconSrc} alt="" width={24} height={24} style={{ display: 'block' }} />
+                <Icon as={GAME_META.wolf.Icon} aria-hidden="true" boxSize={4} />
                 {GAME_META.wolf.label}
               </span>
             </Button>
@@ -791,7 +788,7 @@ export default function App() {
               type="button"
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <img src={GAME_META.bbb.iconSrc} alt="" width={24} height={24} style={{ display: 'block' }} />
+                <Icon as={GAME_META.bbb.Icon} aria-hidden="true" boxSize={4} />
                 {GAME_META.bbb.label}
               </span>
             </Button>
