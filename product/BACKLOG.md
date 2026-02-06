@@ -3,25 +3,24 @@
 Opinionated and small. Keep slices shippable and feedback-driven.
 
 ## Now (next 1–2 PRs)
-- [ ] Performance / bundle hygiene
-  - investigate the Vite/Rollup warning about a >500kB minified JS chunk
-  - establish a baseline (bundle size + main route load time)
-  - consider low-risk code splitting (e.g., lazy-load settlement/standings screens)
-  - avoid premature complexity; keep changes reviewable
-
-## Next
+- [ ] Quality gates (cheap confidence)
+  - fix current ESLint issues (`no-explicit-any` in `storage.ts` + `theme.ts`)
+  - wire ESLint into CI (or Vercel build) so we don’t regress
+  - keep rules pragmatic (ship-fast > perfect)
 - [ ] Instrumentation v2 (still local-first)
   - formalize event names
-  - add a "debug export" button (copy JSON)
-  - roadmap: optional external vendor later
+  - add a “debug export” button (copy JSON)
+  - keep `localStorage` ring buffer; roadmap external vendor later
+
+## Next
 - [ ] Accessibility QA (quick sweep)
   - tap targets, focus states, aria labels, not color-only
   - verify reduced-motion behavior
-
-## Later (product)
 - [ ] Distribution + learning loop
   - weekend rounds: capture friction + failure cases
   - add a lightweight feedback capture path (copy/paste prompt or link)
+
+## Later (product)
 - [ ] More games (only if they match the on-course interaction model)
 - [ ] "Chat referee" direction
   - Phase 1: single scorekeeper
@@ -42,6 +41,10 @@ Opinionated and small. Keep slices shippable and feedback-driven.
 - [x] Holes/Grid → Chakra (header/actions + interactive controls)
 - [x] Settlement/Standings → Chakra
 - [x] CSS cleanup + remaining legacy UI cleanup
+
+### Perf / bundle hygiene
+- [x] Bundle analyzer (`ANALYZE=1` → `dist/stats.html`)
+- [x] Split vendor chunks to avoid >500kB minified chunk warning
 
 ### Polish
 - [x] Typography/spacing pass (Inputs/Textareas/Table headers)
