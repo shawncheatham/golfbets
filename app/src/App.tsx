@@ -91,16 +91,17 @@ function GameRules({ game, defaultOpen = false }: { game: GameType; defaultOpen?
   return (
     <div className="rulesCard">
       <div className="rulesHeader">
-        <button
-          className="btn ghost miniBtn"
+        <Button
+          variant="tertiary"
+          size="sm"
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           title={open ? 'Hide rules' : 'Show rules'}
+          leftIcon={<Icon as={BookOpen} boxSize={4} aria-hidden="true" />}
         >
-          <BookOpen size={16} aria-hidden="true" />
           Rules
-        </button>
+        </Button>
       </div>
 
       {open && (
@@ -814,42 +815,68 @@ export default function App() {
           {stored.rounds.length > 0 && (
             <>
               <div style={{ height: 18 }} />
-              <div className="label">Recent rounds</div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Game</th>
-                    <th>Name</th>
-                    <th>Players</th>
-                    <th style={{ textAlign: 'right' }}>Stake</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                Recent rounds
+              </Text>
+              <Table size="sm">
+                <Thead>
+                  <Tr>
+                    <Th>Game</Th>
+                    <Th>Name</Th>
+                    <Th>Players</Th>
+                    <Th textAlign="right">Stake</Th>
+                    <Th textAlign="right">Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
                   {stored.rounds
                     .slice()
                     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
                     .slice(0, 10)
                     .map((r) => (
-                      <tr key={r.id}>
-                        <td className="small">{r.game === 'wolf' ? 'Wolf' : 'Skins'}</td>
-                        <td>{r.name || (r.game === 'wolf' ? 'Wolf' : 'Skins')}</td>
-                        <td className="small">{r.players.map((p) => p.name).join(', ')}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          {r.game === 'wolf' ? wolfLabel(r.wolfPointsPerHole) : stakeLabel(r.stakeCents || 0)}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button className="btn ghost" onClick={() => loadExistingRound(r)} type="button">
-                            Open
-                          </button>{' '}
-                          <button className="btn danger" onClick={() => deleteExistingRound(r.id)} type="button">
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
+                      <Tr key={r.id}>
+                        <Td>
+                          <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                            {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                          </Text>
+                        </Td>
+                        <Td>{r.name || (r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins')}</Td>
+                        <Td>
+                          <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                            {r.players.map((p) => p.name).join(', ')}
+                          </Text>
+                        </Td>
+                        <Td textAlign="right">
+                          {r.game === 'wolf'
+                            ? wolfLabel(r.wolfPointsPerHole)
+                            : r.game === 'bbb'
+                              ? `$${((r.bbbDollarsPerPointCents || 0) / 100).toFixed(0)}/pt`
+                              : stakeLabel(r.stakeCents || 0)}
+                        </Td>
+                        <Td textAlign="right">
+                          <HStack justify="flex-end" spacing={2}>
+                            <Button variant="tertiary" size="sm" onClick={() => loadExistingRound(r)} type="button">
+                              Open
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => {
+                                const label = r.name || (r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins')
+                                const ok = confirm(`Delete “${label}”?`)
+                                if (!ok) return
+                                deleteExistingRound(r.id)
+                              }}
+                              type="button"
+                            >
+                              Delete
+                            </Button>
+                          </HStack>
+                        </Td>
+                      </Tr>
                     ))}
-                </tbody>
-              </table>
+                </Tbody>
+              </Table>
             </>
           )}
         </Box>
@@ -1122,42 +1149,60 @@ export default function App() {
               </HStack>
 
             {round.game === 'skins' && settlement && !round.locked && isRoundComplete() && (
-              <div className="card" style={{ padding: 12, marginTop: 12 }}>
-                <div style={{ fontWeight: 800, marginBottom: 4 }}>Round complete</div>
-                <div className="small" style={{ marginBottom: 10 }}>
-                  Lock the round to prevent edits, then share the settlement to the group.
-                </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button className="btn primary" onClick={() => lockRound(true)} type="button">
-                    Lock + open settlement →
-                  </button>
-                  <button className="btn" onClick={shareSettlement} type="button">
-                    Share settlement
-                  </button>
-                </div>
-              </div>
+              <Card variant="outline" mt={3}>
+                <CardBody>
+                  <Stack spacing={3}>
+                    <Text fontWeight={800}>Round complete</Text>
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      Lock the round to prevent edits, then share the settlement to the group.
+                    </Text>
+                    <Wrap spacing={2}>
+                      <WrapItem>
+                        <Button variant="primary" size="sm" onClick={() => lockRound(true)} type="button">
+                          Lock + open settlement →
+                        </Button>
+                      </WrapItem>
+                      <WrapItem>
+                        <Button variant="secondary" size="sm" onClick={shareSettlement} type="button">
+                          Share settlement
+                        </Button>
+                      </WrapItem>
+                    </Wrap>
+                  </Stack>
+                </CardBody>
+              </Card>
             )}
 
             {round.game === 'wolf' && wolf && !round.locked && isRoundComplete() && (
-              <div className="card" style={{ padding: 12, marginTop: 12 }}>
-                <div style={{ fontWeight: 800, marginBottom: 4 }}>Round complete</div>
-                <div className="small" style={{ marginBottom: 10 }}>
-                  Lock the round to prevent edits, then share standings (and settlement if $/pt is set).
-                </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button className="btn primary" onClick={() => lockRound(true)} type="button">
-                    Lock + open standings →
-                  </button>
-                  <button className="btn" onClick={copyStatus} type="button">
-                    Share standings
-                  </button>
-                  {wolfSettlement && (
-                    <button className="btn" onClick={copyWolfSettlement} type="button">
-                      Share settlement
-                    </button>
-                  )}
-                </div>
-              </div>
+              <Card variant="outline" mt={3}>
+                <CardBody>
+                  <Stack spacing={3}>
+                    <Text fontWeight={800}>Round complete</Text>
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      Lock the round to prevent edits, then share standings (and settlement if $/pt is set).
+                    </Text>
+                    <Wrap spacing={2}>
+                      <WrapItem>
+                        <Button variant="primary" size="sm" onClick={() => lockRound(true)} type="button">
+                          Lock + open standings →
+                        </Button>
+                      </WrapItem>
+                      <WrapItem>
+                        <Button variant="secondary" size="sm" onClick={copyStatus} type="button">
+                          Share standings
+                        </Button>
+                      </WrapItem>
+                      {wolfSettlement && (
+                        <WrapItem>
+                          <Button variant="secondary" size="sm" onClick={copyWolfSettlement} type="button">
+                            Share settlement
+                          </Button>
+                        </WrapItem>
+                      )}
+                    </Wrap>
+                  </Stack>
+                </CardBody>
+              </Card>
             )}
 
             <div className="holes">
@@ -1362,67 +1407,78 @@ export default function App() {
             <div style={{ height: 14 }} />
 
             {round.game === 'skins' && skins && (
-              <div className="row two">
-                <div>
-                  <div className="label">Skins won</div>
-                  <table className="table">
-                    <tbody>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                    Skins won
+                  </Text>
+                  <Table size="sm">
+                    <Tbody>
                       {round.players.map((p) => (
-                        <tr key={p.id}>
-                          <td>{p.name}</td>
-                          <td style={{ textAlign: 'right' }}>{skins.skinsWon[p.id] || 0}</td>
-                        </tr>
+                        <Tr key={p.id}>
+                          <Td>{p.name}</Td>
+                          <Td textAlign="right">{skins.skinsWon[p.id] || 0}</Td>
+                        </Tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div>
-                  <div className="label">Per-hole (winner / carry)</div>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Hole</th>
-                        <th>Winner</th>
-                        <th style={{ textAlign: 'right' }}>Skins</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    </Tbody>
+                  </Table>
+                </Box>
+
+                <Box>
+                  <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                    Per-hole (winner / carry)
+                  </Text>
+                  <Table size="sm">
+                    <Thead>
+                      <Tr>
+                        <Th>Hole</Th>
+                        <Th>Winner</Th>
+                        <Th textAlign="right">Skins</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
                       {skins.holeResults.map((hr) => {
                         const winner = hr.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : '—'
                         const label = hr.winnerId ? winner : `tie (carry)`
                         return (
-                          <tr key={hr.hole}>
-                            <td>{hr.hole}</td>
-                            <td>{label}</td>
-                            <td style={{ textAlign: 'right' }}>{hr.winnerId ? hr.wonSkins : hr.carrySkins ? `+${hr.carrySkins}` : '—'}</td>
-                          </tr>
+                          <Tr key={hr.hole}>
+                            <Td>{hr.hole}</Td>
+                            <Td>{label}</Td>
+                            <Td textAlign="right">{hr.winnerId ? hr.wonSkins : hr.carrySkins ? `+${hr.carrySkins}` : '—'}</Td>
+                          </Tr>
                         )
                       })}
-                    </tbody>
-                  </table>
-                  <div className="small">Note: ties carry 1 skin forward. Carry resets on a win. Ties after 18 remain unresolved.</div>
-                </div>
-              </div>
+                    </Tbody>
+                  </Table>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                    Note: ties carry 1 skin forward. Carry resets on a win. Ties after 18 remain unresolved.
+                  </Text>
+                </Box>
+              </SimpleGrid>
             )}
 
             {round.game === 'wolf' && wolf && (
-              <div>
-                <div className="label">Points (leaderboard)</div>
-                <table className="table">
-                  <tbody>
+              <Box>
+                <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                  Points (leaderboard)
+                </Text>
+                <Table size="sm">
+                  <Tbody>
                     {round.players
                       .slice()
                       .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
                       .map((p) => (
-                        <tr key={p.id}>
-                          <td>{p.name}</td>
-                          <td style={{ textAlign: 'right' }}>{wolf.pointsByPlayer[p.id] || 0}</td>
-                        </tr>
+                        <Tr key={p.id}>
+                          <Td>{p.name}</Td>
+                          <Td textAlign="right">{wolf.pointsByPlayer[p.id] || 0}</Td>
+                        </Tr>
                       ))}
-                  </tbody>
-                </table>
-                <div className="small">Wolf rotates each hole (starting from Player 1 on hole 1). Choose partner in Quick mode (or play Lone Wolf).</div>
-              </div>
+                  </Tbody>
+                </Table>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                  Wolf rotates each hole (starting from Player 1 on hole 1). Choose partner in Quick mode (or play Lone Wolf).
+                </Text>
+              </Box>
             )}
             </Stack>
           </CardBody>
@@ -1719,9 +1775,16 @@ export default function App() {
                         />
                       </HStack>
                     </div>
-                    <button className="btn ghost" disabled={!!round.locked} onClick={() => setStroke(quickHole, p.id, '')} title="Clear" type="button">
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      isDisabled={!!round.locked}
+                      onClick={() => setStroke(quickHole, p.id, '')}
+                      title="Clear"
+                      type="button"
+                    >
                       Clear
-                    </button>
+                    </Button>
                   </div>
                 )
               })}
