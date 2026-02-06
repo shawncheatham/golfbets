@@ -16,10 +16,17 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Textarea,
   useColorMode,
   VStack,
   Wrap,
   WrapItem,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
 } from '@chakra-ui/react'
 import { BookOpen, ChevronRight, Dice5, Moon, RotateCw, Sun, Trophy, Users } from 'lucide-react'
 
@@ -1836,283 +1843,375 @@ export default function App() {
       )}
 
       {screen === 'settlement' && round.game === 'skins' && settlement && (
-        <div className="card">
-          <GameRules game={round.game} defaultOpen={false} />
-          <div style={{ height: 12 }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div className="label">Settlement</div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Skins'}</div>
-              <div className="small">Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)</div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
-                Quick mode
-              </button>
-              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
-                ← Back to holes
-              </button>
-              <button className="btn" onClick={copySettlement} type="button">
-                Copy settlement
-              </button>
-              <button
-                className={round.locked ? 'btn primary' : 'btn'}
-                onClick={shareSettlement}
-                type="button"
-                title="Copy the settlement text to paste in the group chat"
-              >
-                Share settlement
-              </button>
-              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                Share status
-              </button>
-              <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                New game
-              </button>
-            </div>
-          </div>
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={4}>
+              <GameRules game={round.game} defaultOpen={false} />
 
-          <div style={{ height: 14 }} />
+              <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                    Settlement
+                  </Text>
+                  <Text fontSize="lg" fontWeight={800}>
+                    {round.name || 'Skins'}
+                  </Text>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                    Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)
+                  </Text>
+                </Box>
 
-          <div className="row two">
-            <div>
-              <div className="label">Net by player</div>
-              <table className="table">
-                <tbody>
-                  {round.players.map((p) => {
-                    const net = settlement.netByPlayer[p.id] || 0
-                    return (
-                      <tr key={p.id}>
-                        <td>{p.name}</td>
-                        <td style={{ textAlign: 'right' }} className={net >= 0 ? 'positive' : 'negative'}>
-                          {net >= 0 ? '+' : '-'}${Math.abs(net / 100).toFixed(2)}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-              <div className="small">Positive = they should receive money. Negative = they owe.</div>
-            </div>
+                <Wrap spacing={2} justify="flex-end">
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
+                      Quick mode
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
+                      ← Back to holes
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="secondary" size="sm" onClick={copySettlement} type="button">
+                      Copy settlement
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                      Share settlement
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                      Share status
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
+                      New game
+                    </Button>
+                  </WrapItem>
+                </Wrap>
+              </HStack>
 
-            <div>
-              <div className="label">Money (suggested payments)</div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {settlement.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="small">
-                        No payments needed.
-                      </td>
-                    </tr>
-                  ) : (
-                    settlement.lines.map((l, idx) => (
-                      <tr key={idx}>
-                        <td>{l.from.name}</td>
-                        <td>{l.to.name}</td>
-                        <td style={{ textAlign: 'right' }}>${(l.amountCents / 100).toFixed(2)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              <div className="small">This is a suggestion to minimize transactions. Pay via Venmo/Cash App/etc.</div>
-            </div>
-          </div>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Net by player
+                  </Text>
+                  <Table size="sm">
+                    <Tbody>
+                      {round.players.map((p) => {
+                        const net = settlement.netByPlayer[p.id] || 0
+                        return (
+                          <Tr key={p.id}>
+                            <Td>{p.name}</Td>
+                            <Td textAlign="right" className={net >= 0 ? 'positive' : 'negative'}>
+                              {net >= 0 ? '+' : '-'}${Math.abs(net / 100).toFixed(2)}
+                            </Td>
+                          </Tr>
+                        )
+                      })}
+                    </Tbody>
+                  </Table>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                    Positive = they should receive money. Negative = they owe.
+                  </Text>
+                </Box>
 
-          <div style={{ height: 14 }} />
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Money (suggested payments)
+                  </Text>
+                  <Table size="sm">
+                    <Thead>
+                      <Tr>
+                        <Th>From</Th>
+                        <Th>To</Th>
+                        <Th textAlign="right">Amount</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {settlement.lines.length === 0 ? (
+                        <Tr>
+                          <Td colSpan={3}>
+                            <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                              No payments needed.
+                            </Text>
+                          </Td>
+                        </Tr>
+                      ) : (
+                        settlement.lines.map((l, idx) => (
+                          <Tr key={idx}>
+                            <Td>{l.from.name}</Td>
+                            <Td>{l.to.name}</Td>
+                            <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
+                          </Tr>
+                        ))
+                      )}
+                    </Tbody>
+                  </Table>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                    This is a suggestion to minimize transactions. Pay via Venmo/Cash App/etc.
+                  </Text>
+                </Box>
+              </SimpleGrid>
 
-          <div className="label">Shareable text</div>
-          <textarea className="input" style={{ height: 180 }} readOnly value={settlementText()} />
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Shareable text
+                </Text>
+                <Textarea h="180px" readOnly value={settlementText()} />
+              </Box>
 
-          <div className="footerActions">
-            <button className="btn" onClick={copySettlement} type="button">
-              Copy settlement
-            </button>
-            <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
-              Back
-            </button>
-          </div>
-        </div>
+              <Wrap spacing={2} justify="flex-end">
+                <WrapItem>
+                  <Button variant="secondary" size="sm" onClick={copySettlement} type="button">
+                    Copy settlement
+                  </Button>
+                </WrapItem>
+                <WrapItem>
+                  <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
+                    Back
+                  </Button>
+                </WrapItem>
+              </Wrap>
+            </Stack>
+          </CardBody>
+        </Card>
       )}
 
       {screen === 'settlement' && round.game === 'bbb' && bbb && (
-        <div className="card">
-          <GameRules game={round.game} defaultOpen={false} />
-          <div style={{ height: 12 }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div className="label">Standings</div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'BBB'}</div>
-              <div className="small">Bingo Bango Bongo • award-entry</div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                Share status
-              </button>
-              {bbbSettlement && (
-                <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
-                  Share settlement
-                </button>
-              )}
-              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
-                Quick mode
-              </button>
-              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
-                ← Back to holes
-              </button>
-              <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                New game
-              </button>
-            </div>
-          </div>
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={4}>
+              <GameRules game={round.game} defaultOpen={false} />
 
-          <div style={{ height: 14 }} />
+              <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                    Standings
+                  </Text>
+                  <Text fontSize="lg" fontWeight={800}>
+                    {round.name || 'BBB'}
+                  </Text>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                    Bingo Bango Bongo • award-entry
+                  </Text>
+                </Box>
 
-          <div className="label">Points by player</div>
-          <table className="table">
-            <tbody>
-              {round.players
-                .slice()
-                .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
-                .map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td style={{ textAlign: 'right' }}>{bbb.pointsByPlayer[p.id] || 0}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-
-          {bbbSettlement && (
-            <>
-              <div style={{ height: 14 }} />
-              <div className="label">Money (suggested payments)</div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bbbSettlement.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="small">No payments needed.</td>
-                    </tr>
-                  ) : (
-                    bbbSettlement.lines.map((l, idx) => (
-                      <tr key={idx}>
-                        <td>{l.from.name}</td>
-                        <td>{l.to.name}</td>
-                        <td style={{ textAlign: 'right' }}>${(l.amountCents / 100).toFixed(2)}</td>
-                      </tr>
-                    ))
+                <Wrap spacing={2} justify="flex-end">
+                  <WrapItem>
+                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                      Share status
+                    </Button>
+                  </WrapItem>
+                  {bbbSettlement && (
+                    <WrapItem>
+                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                        Share settlement
+                      </Button>
+                    </WrapItem>
                   )}
-                </tbody>
-              </table>
-              <div className="small">Based on ${dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)} per point.</div>
-            </>
-          )}
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
+                      Quick mode
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
+                      ← Back to holes
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
+                      New game
+                    </Button>
+                  </WrapItem>
+                </Wrap>
+              </HStack>
 
-          <div style={{ height: 14 }} />
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Points by player
+                </Text>
+                <Table size="sm">
+                  <Tbody>
+                    {round.players
+                      .slice()
+                      .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
+                      .map((p) => (
+                        <Tr key={p.id}>
+                          <Td>{p.name}</Td>
+                          <Td textAlign="right">{bbb.pointsByPlayer[p.id] || 0}</Td>
+                        </Tr>
+                      ))}
+                  </Tbody>
+                </Table>
+              </Box>
 
-          <div className="small">Tip: in Quick mode, set Bingo/Bango/Bongo winners (or None) for each hole.</div>
-        </div>
+              {bbbSettlement && (
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Money (suggested payments)
+                  </Text>
+                  <Table size="sm">
+                    <Thead>
+                      <Tr>
+                        <Th>From</Th>
+                        <Th>To</Th>
+                        <Th textAlign="right">Amount</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {bbbSettlement.lines.length === 0 ? (
+                        <Tr>
+                          <Td colSpan={3}>
+                            <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                              No payments needed.
+                            </Text>
+                          </Td>
+                        </Tr>
+                      ) : (
+                        bbbSettlement.lines.map((l, idx) => (
+                          <Tr key={idx}>
+                            <Td>{l.from.name}</Td>
+                            <Td>{l.to.name}</Td>
+                            <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
+                          </Tr>
+                        ))
+                      )}
+                    </Tbody>
+                  </Table>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                    Based on ${dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)} per point.
+                  </Text>
+                </Box>
+              )}
+
+              <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                Tip: in Quick mode, set Bingo/Bango/Bongo winners (or None) for each hole.
+              </Text>
+            </Stack>
+          </CardBody>
+        </Card>
       )}
 
       {screen === 'settlement' && round.game === 'wolf' && wolf && (
-        <div className="card">
-          <GameRules game={round.game} defaultOpen={false} />
-          <div style={{ height: 12 }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div className="label">Standings</div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || 'Wolf'}</div>
-              <div className="small">{wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x</div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                Share status
-              </button>
-              {wolfSettlement && (
-                <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
-                  Share settlement
-                </button>
-              )}
-              <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
-                Quick mode
-              </button>
-              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
-                ← Back to holes
-              </button>
-              <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                New game
-              </button>
-            </div>
-          </div>
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={4}>
+              <GameRules game={round.game} defaultOpen={false} />
 
-          <div style={{ height: 14 }} />
+              <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                    Standings
+                  </Text>
+                  <Text fontSize="lg" fontWeight={800}>
+                    {round.name || 'Wolf'}
+                  </Text>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                    {wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x
+                  </Text>
+                </Box>
 
-          <div className="label">Points by player</div>
-          <table className="table">
-            <tbody>
-              {round.players
-                .slice()
-                .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
-                .map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td style={{ textAlign: 'right' }}>{wolf.pointsByPlayer[p.id] || 0}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-
-          {wolfSettlement && (
-            <>
-              <div style={{ height: 14 }} />
-              <div className="label">Money (suggested payments)</div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {wolfSettlement.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="small">No payments needed.</td>
-                    </tr>
-                  ) : (
-                    wolfSettlement.lines.map((l, idx) => (
-                      <tr key={idx}>
-                        <td>{l.from.name}</td>
-                        <td>{l.to.name}</td>
-                        <td style={{ textAlign: 'right' }}>${(l.amountCents / 100).toFixed(2)}</td>
-                      </tr>
-                    ))
+                <Wrap spacing={2} justify="flex-end">
+                  <WrapItem>
+                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                      Share status
+                    </Button>
+                  </WrapItem>
+                  {wolfSettlement && (
+                    <WrapItem>
+                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                        Share settlement
+                      </Button>
+                    </WrapItem>
                   )}
-                </tbody>
-              </table>
-              <div className="small">Based on ${dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)} per point.</div>
-            </>
-          )}
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
+                      Quick mode
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
+                      ← Back to holes
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
+                      New game
+                    </Button>
+                  </WrapItem>
+                </Wrap>
+              </HStack>
 
-          <div style={{ height: 14 }} />
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Points by player
+                </Text>
+                <Table size="sm">
+                  <Tbody>
+                    {round.players
+                      .slice()
+                      .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
+                      .map((p) => (
+                        <Tr key={p.id}>
+                          <Td>{p.name}</Td>
+                          <Td textAlign="right">{wolf.pointsByPlayer[p.id] || 0}</Td>
+                        </Tr>
+                      ))}
+                  </Tbody>
+                </Table>
+              </Box>
 
-          <div className="small">Tip: pick Wolf partner per hole in Quick mode (or tap Lone).</div>
-        </div>
+              {wolfSettlement && (
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Money (suggested payments)
+                  </Text>
+                  <Table size="sm">
+                    <Thead>
+                      <Tr>
+                        <Th>From</Th>
+                        <Th>To</Th>
+                        <Th textAlign="right">Amount</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {wolfSettlement.lines.length === 0 ? (
+                        <Tr>
+                          <Td colSpan={3}>
+                            <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                              No payments needed.
+                            </Text>
+                          </Td>
+                        </Tr>
+                      ) : (
+                        wolfSettlement.lines.map((l, idx) => (
+                          <Tr key={idx}>
+                            <Td>{l.from.name}</Td>
+                            <Td>{l.to.name}</Td>
+                            <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
+                          </Tr>
+                        ))
+                      )}
+                    </Tbody>
+                  </Table>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                    Based on ${dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)} per point.
+                  </Text>
+                </Box>
+              )}
+
+              <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                Tip: pick Wolf partner per hole in Quick mode (or tap Lone).
+              </Text>
+            </Stack>
+          </CardBody>
+        </Card>
       )}
     </Container>
   )
