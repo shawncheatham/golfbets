@@ -19,7 +19,7 @@ import {
   useColorMode,
   VStack,
 } from '@chakra-ui/react'
-import { BookOpen, ChevronRight, Dice5, Moon, Sun, Trophy, Users } from 'lucide-react'
+import { BookOpen, ChevronRight, Dice5, Moon, RotateCw, Sun, Trophy, Users } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -92,7 +92,6 @@ function GameRules({ game, defaultOpen = false }: { game: GameType; defaultOpen?
           <BookOpen size={16} aria-hidden="true" />
           Rules
         </button>
-        <span className="small">{meta.short}</span>
       </div>
 
       {open && (
@@ -857,7 +856,7 @@ export default function App() {
                     <FormLabel m={0}>Round name</FormLabel>
                     <IconButton
                       aria-label="Reroll name"
-                      icon={<Icon as={GAME_META[round.game].Icon} boxSize={5} aria-hidden="true" />}
+                      icon={<Icon as={RotateCw} boxSize={5} aria-hidden="true" />}
                       variant="tertiary"
                       size="sm"
                       onClick={() =>
@@ -950,7 +949,7 @@ export default function App() {
 
                 {round.game === 'wolf' && (
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
-                    Wolf is 4 players only (v1). Wolf rotates each hole. Partner is chosen per hole in Quick mode.
+                    Wolf is 4 players only. Partner is chosen per hole in Quick mode.
                   </Text>
                 )}
 
