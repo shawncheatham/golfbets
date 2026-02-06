@@ -1328,6 +1328,7 @@ export default function App() {
                                 inputMode="numeric"
                                 placeholder="-"
                                 textAlign="center"
+                                aria-label={`Hole ${hole}, ${p.name} strokes`}
                               />
                             </div>
                           ))}
@@ -1393,6 +1394,7 @@ export default function App() {
                                 inputMode="numeric"
                                 placeholder="-"
                                 textAlign="center"
+                                aria-label={`Hole ${hole}, ${p.name} strokes`}
                               />
                             </div>
                           ))}
@@ -1753,7 +1755,7 @@ export default function App() {
 
                       <HStack spacing={2} mt={2}>
                         <IconButton
-                          aria-label="Decrease"
+                          aria-label={`Decrease ${p.name}`}
                           icon={<span aria-hidden="true">−</span>}
                           size="sm"
                           variant="outline"
@@ -1765,7 +1767,7 @@ export default function App() {
                           {typeof val === 'number' ? val : '—'}
                         </Box>
                         <IconButton
-                          aria-label="Increase"
+                          aria-label={`Increase ${p.name}`}
                           icon={<span aria-hidden="true">+</span>}
                           size="sm"
                           variant="outline"
