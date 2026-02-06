@@ -763,23 +763,34 @@ export default function App() {
               onClick={() => startNew('skins')}
               type="button"
             >
-              Skins
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                <Icon as={GAME_META.skins.Icon} aria-hidden="true" boxSize={4} />
+                {GAME_META.skins.label}
+              </span>
             </Button>
+
             <Button
               variant="primary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('wolf')}
               type="button"
             >
-              Wolf
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                <Icon as={GAME_META.wolf.Icon} aria-hidden="true" boxSize={4} />
+                {GAME_META.wolf.label}
+              </span>
             </Button>
+
             <Button
               variant="primary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('bbb')}
               type="button"
             >
-              Bingo Bango Bongo
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                <Icon as={GAME_META.bbb.Icon} aria-hidden="true" boxSize={4} />
+                {GAME_META.bbb.label}
+              </span>
             </Button>
           </SimpleGrid>
 
