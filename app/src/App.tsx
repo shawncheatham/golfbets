@@ -1190,9 +1190,9 @@ export default function App() {
                       return (
                         <div key={hole} className="holeRow skins">
                           <div className="holeCell">
-                            <button className="btn ghost" type="button" onClick={() => { setQuickHole(hole); setScreen('quick') }}>
+                            <Button variant="tertiary" size="sm" type="button" onClick={() => { setQuickHole(hole); setScreen('quick') }}>
                               {hole}
-                            </button>
+                            </Button>
                           </div>
                           <div className="holeCell">{nameFor(a?.bingo)}</div>
                           <div className="holeCell">{nameFor(a?.bango)}</div>
@@ -1251,9 +1251,9 @@ export default function App() {
                           <div className="holeCell">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <span className="holeNum">{hole}</span>
-                              <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
+                              <Button variant="tertiary" size="xs" onClick={() => clearHole(hole)} isDisabled={!!round.locked} type="button">
                                 Clear
-                              </button>
+                              </Button>
                             </div>
                           </div>
                           <div className="holeCell">
@@ -1269,12 +1269,13 @@ export default function App() {
                           </div>
                           {round.players.map((p) => (
                             <div key={p.id} className="holeCell">
-                              <input
-                                className="holeInput"
-                                value={round.strokesByHole[hole]?.[p.id] ?? ''}
+                              <Input
+                                size="sm"
+                                value={String(round.strokesByHole[hole]?.[p.id] ?? '')}
                                 onChange={(e) => setStroke(hole, p.id, e.target.value)}
                                 inputMode="numeric"
                                 placeholder="-"
+                                textAlign="center"
                               />
                             </div>
                           ))}
@@ -1321,9 +1322,9 @@ export default function App() {
                           <div className="holeCell">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <span className="holeNum">{hole}</span>
-                              <button className="btn ghost miniBtn" onClick={() => clearHole(hole)} disabled={!!round.locked} type="button">
+                              <Button variant="tertiary" size="xs" onClick={() => clearHole(hole)} isDisabled={!!round.locked} type="button">
                                 Clear
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -1333,12 +1334,13 @@ export default function App() {
 
                           {round.players.map((p) => (
                             <div key={p.id} className="holeCell">
-                              <input
-                                className="holeInput"
-                                value={round.strokesByHole[hole]?.[p.id] ?? ''}
+                              <Input
+                                size="sm"
+                                value={String(round.strokesByHole[hole]?.[p.id] ?? '')}
                                 onChange={(e) => setStroke(hole, p.id, e.target.value)}
                                 inputMode="numeric"
                                 placeholder="-"
+                                textAlign="center"
                               />
                             </div>
                           ))}
