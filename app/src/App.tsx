@@ -18,6 +18,8 @@ import {
   Text,
   useColorMode,
   VStack,
+  Wrap,
+  WrapItem,
 } from '@chakra-ui/react'
 import { BookOpen, ChevronRight, Dice5, Moon, RotateCw, Sun, Trophy, Users } from 'lucide-react'
 
@@ -1536,28 +1538,35 @@ export default function App() {
                 const renderAward = (award: BBBAwardType, label: string) => (
                   <div style={{ marginBottom: 10 }}>
                     <div className="small" style={{ fontWeight: 800, marginBottom: 6 }}>{label}</div>
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <button
-                        className={`chip ${awards[award] === null ? 'active' : ''}`}
-                        onClick={() => setBBBAwardForHole(hole, award, null)}
-                        disabled={!!round.locked}
-                        type="button"
-                        title="No winner / unknown"
-                      >
-                        None
-                      </button>
-                      {round.players.map((p) => (
-                        <button
-                          key={p.id}
-                          className={`chip ${awards[award] === p.id ? 'active' : ''}`}
-                          onClick={() => setBBBAwardForHole(hole, award, p.id)}
-                          disabled={!!round.locked}
+                    <Wrap spacing={2}>
+                      <WrapItem>
+                        <Button
+                          size="sm"
+                          variant={awards[award] === null ? 'solid' : 'outline'}
+                          onClick={() => setBBBAwardForHole(hole, award, null)}
+                          isDisabled={!!round.locked}
                           type="button"
+                          title="No winner / unknown"
+                          aria-pressed={awards[award] === null}
                         >
-                          {p.name}
-                        </button>
+                          None
+                        </Button>
+                      </WrapItem>
+                      {round.players.map((p) => (
+                        <WrapItem key={p.id}>
+                          <Button
+                            size="sm"
+                            variant={awards[award] === p.id ? 'solid' : 'outline'}
+                            onClick={() => setBBBAwardForHole(hole, award, p.id)}
+                            isDisabled={!!round.locked}
+                            type="button"
+                            aria-pressed={awards[award] === p.id}
+                          >
+                            {p.name}
+                          </Button>
+                        </WrapItem>
                       ))}
-                    </div>
+                    </Wrap>
                   </div>
                 )
 
@@ -1575,38 +1584,45 @@ export default function App() {
           {round.game === 'wolf' && wolfHole && (
             <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
               <div className="label">Pick partner for this hole</div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Wrap spacing={2}>
                 {round.players
                   .filter((p) => p.id !== wolfHole.wolfId)
                   .map((p) => {
                     const selected = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) === p.id
                     return (
-                      <button
-                        key={p.id}
-                        className={`chip ${selected ? 'active' : ''}`}
-                        onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, p.id)}
-                        disabled={!!round.locked}
-                        type="button"
-                      >
-                        {p.name}
-                      </button>
+                      <WrapItem key={p.id}>
+                        <Button
+                          size="sm"
+                          variant={selected ? 'solid' : 'outline'}
+                          onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, p.id)}
+                          isDisabled={!!round.locked}
+                          type="button"
+                          aria-pressed={selected}
+                        >
+                          {p.name}
+                        </Button>
+                      </WrapItem>
                     )
                   })}
                 {(() => {
                   const selected = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) === null
                   return (
-                    <button
-                      className={`chip ${selected ? 'active' : ''}`}
-                      onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, null)}
-                      disabled={!!round.locked}
-                      type="button"
-                      title="Play lone wolf"
-                    >
-                      Lone
-                    </button>
+                    <WrapItem>
+                      <Button
+                        size="sm"
+                        variant={selected ? 'solid' : 'outline'}
+                        onClick={() => setWolfPartnerForHole(quickHole as HoleNumber, null)}
+                        isDisabled={!!round.locked}
+                        type="button"
+                        title="Play lone wolf"
+                        aria-pressed={selected}
+                      >
+                        Lone
+                      </Button>
+                    </WrapItem>
                   )
                 })()}
-              </div>
+              </Wrap>
               <div className="small">1) Confirm the Wolf above. 2) Tap a partner (or Lone). 3) Enter scores. This pairing is saved per hole.</div>
             </div>
           )}
@@ -1621,35 +1637,47 @@ export default function App() {
                       <div style={{ fontWeight: 800 }}>{p.name}</div>
                     </div>
                     <div className="quickScore">
-                      <div className="chipRow" aria-label={`${p.name} quick score buttons`}>
+                      <Wrap spacing={2} aria-label={`${p.name} quick score buttons`}>
                         {[3, 4, 5, 6, 7].map((n) => (
-                          <button
-                            key={n}
-                            className={`chip ${val === n ? 'active' : ''}`}
-                            onClick={() => setStroke(quickHole, p.id, String(n))}
-                            disabled={!!round.locked}
-                            type="button"
-                            title={`Set ${p.name} to ${n}`}
-                          >
-                            {n}
-                          </button>
+                          <WrapItem key={n}>
+                            <Button
+                              size="sm"
+                              variant={val === n ? 'solid' : 'outline'}
+                              onClick={() => setStroke(quickHole, p.id, String(n))}
+                              isDisabled={!!round.locked}
+                              type="button"
+                              title={`Set ${p.name} to ${n}`}
+                              aria-pressed={val === n}
+                            >
+                              {n}
+                            </Button>
+                          </WrapItem>
                         ))}
-                      </div>
+                      </Wrap>
 
-                      <div className="stepper">
-                        <button className="stepBtn" onClick={() => incStroke(quickHole, p.id, -1)} disabled={!!round.locked} type="button">
-                          −
-                        </button>
-                        <div className="stepVal">{typeof val === 'number' ? val : '—'}</div>
-                        <button
-                          className="stepBtn"
-                          onClick={() => incStroke(quickHole, p.id, +1)}
-                          disabled={!!round.locked}
+                      <HStack spacing={2} mt={2}>
+                        <IconButton
+                          aria-label="Decrease"
+                          icon={<span aria-hidden="true">−</span>}
+                          size="sm"
+                          variant="outline"
+                          onClick={() => incStroke(quickHole, p.id, -1)}
+                          isDisabled={!!round.locked}
                           type="button"
-                        >
-                          +
-                        </button>
-                      </div>
+                        />
+                        <Box minW="44px" textAlign="center" fontWeight={800}>
+                          {typeof val === 'number' ? val : '—'}
+                        </Box>
+                        <IconButton
+                          aria-label="Increase"
+                          icon={<span aria-hidden="true">+</span>}
+                          size="sm"
+                          variant="outline"
+                          onClick={() => incStroke(quickHole, p.id, +1)}
+                          isDisabled={!!round.locked}
+                          type="button"
+                        />
+                      </HStack>
                     </div>
                     <button className="btn ghost" disabled={!!round.locked} onClick={() => setStroke(quickHole, p.id, '')} title="Clear" type="button">
                       Clear
