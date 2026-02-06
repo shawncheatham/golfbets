@@ -916,9 +916,6 @@ export default function App() {
                         inputMode="decimal"
                         placeholder=""
                       />
-                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
-                        Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.
-                      </Text>
                     </FormControl>
                   </Stack>
                 ) : (
