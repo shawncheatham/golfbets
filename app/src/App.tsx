@@ -2,13 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
+  Card,
+  CardBody,
   Container,
+  Divider,
+  FormControl,
+  FormLabel,
   HStack,
   Heading,
   Icon,
+  IconButton,
+  Input,
   SimpleGrid,
+  Stack,
   Text,
   useColorMode,
+  VStack,
 } from '@chakra-ui/react'
 import { BookOpen, ChevronRight, Dice5, Moon, Sun, Trophy, Users } from 'lucide-react'
 
@@ -839,175 +848,174 @@ export default function App() {
       )}
 
       {screen === 'setup' && (
-        <div className="card">
-          <div className="row two">
-            <div>
-              <div className="labelRow">
-                <div className="label">Round name</div>
-                {round.game === 'skins' ? (
-                  <button
-                    className="btn ghost iconBtn"
-                    type="button"
-                    onClick={() => setRound((r) => ({ ...r, name: randomSkinsName() }))}
-                    title="Reroll name"
-                  >
-                    🎲 Reroll
-                  </button>
-                ) : round.game === 'wolf' ? (
-                  <button
-                    className="btn ghost iconBtn"
-                    type="button"
-                    onClick={() => setRound((r) => ({ ...r, name: randomWolfName() }))}
-                    title="Reroll name"
-                  >
-                    🎲 Reroll
-                  </button>
-                ) : (
-                  <button
-                    className="btn ghost iconBtn"
-                    type="button"
-                    onClick={() => setRound((r) => ({ ...r, name: randomBBBName() }))}
-                    title="Reroll name"
-                  >
-                    🎲 Reroll
-                  </button>
-                )}
-              </div>
-
-              <input
-                className="input"
-                value={round.name}
-                onChange={(e) => setRound((r) => ({ ...r, name: e.target.value }))}
-                placeholder="Saturday skins"
-              />
-
-              <div style={{ height: 12 }} />
-              <GameRules game={round.game} defaultOpen={false} />
-            </div>
-
-            {round.game === 'skins' ? (
-              <div>
-                <div className="label">Stake ($/skin)</div>
-                <input
-                  className="input"
-                  value={dollarsStringFromCents(round.stakeCents || 0)}
-                  onChange={(e) => setRound((r) => ({ ...r, stakeCents: centsFromDollarsString(e.target.value) }))}
-                  inputMode="decimal"
-                  placeholder="5"
-                />
-                <div className="small">Gross skins. Carryovers on ties. Tie after 18 remains a tie.</div>
-              </div>
-            ) : round.game === 'wolf' ? (
-              <div>
-                <div className="label">Points per hole</div>
-                <input
-                  className="input"
-                  value={String(round.wolfPointsPerHole ?? 1)}
-                  onChange={(e) => {
-                    const n = Number(e.target.value)
-                    if (!Number.isFinite(n)) return
-                    setRound((r) => ({ ...r, wolfPointsPerHole: Math.max(1, Math.min(10, Math.round(n))) }))
-                  }}
-                  inputMode="numeric"
-                  placeholder="1"
-                />
-                <div style={{ height: 10 }} />
-                <div className="label">$ per point (optional)</div>
-                <input
-                  className="input"
-                  value={dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)}
-                  onChange={(e) => setRound((r) => ({ ...r, wolfDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
-                  inputMode="decimal"
-                  placeholder=""
-                />
-                <div className="small">Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.</div>
-              </div>
-            ) : (
-              <div>
-                <div className="label">$ per point (optional)</div>
-                <input
-                  className="input"
-                  value={dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)}
-                  onChange={(e) => setRound((r) => ({ ...r, bbbDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
-                  inputMode="decimal"
-                  placeholder=""
-                />
-                <div className="small">Settlement uses points × $/pt when set.</div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ height: 16 }} />
-
-          <div className="label">Players ({round.game === 'wolf' ? '4' : '2–4'})</div>
-          <div className="small">
-            {round.game === 'wolf'
-              ? 'Wolf is 4 players only (v1). Wolf rotates each hole. Partner is chosen per hole in Quick mode.'
-              : ''}
-          </div>
-
-          <div className="row">
-            {round.players.map((p, idx) => (
-              <div key={p.id} className="row two">
-                <div>
-                  <input
-                    className="input"
-                    ref={(el) => {
-                      if (!el) return
-                      if (focusPlayerId.current && focusPlayerId.current === p.id) {
-                        queueMicrotask(() => el.focus())
-                        focusPlayerId.current = null
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={5}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <FormControl>
+                  <HStack justify="space-between" align="center" mb={2}>
+                    <FormLabel m={0}>Round name</FormLabel>
+                    <IconButton
+                      aria-label="Reroll name"
+                      icon={<Icon as={GAME_META[round.game].Icon} boxSize={5} aria-hidden="true" />}
+                      variant="tertiary"
+                      size="sm"
+                      onClick={() =>
+                        setRound((r) => ({
+                          ...r,
+                          name: r.game === 'skins' ? randomSkinsName() : r.game === 'wolf' ? randomWolfName() : randomBBBName(),
+                        }))
                       }
-                    }}
-                    value={p.name}
-                    onChange={(e) => updatePlayer(p.id, { name: e.target.value })}
-                    placeholder={`Player ${idx + 1}`}
+                      title="Reroll name"
+                    />
+                  </HStack>
+                  <Input
+                    value={round.name}
+                    onChange={(e) => setRound((r) => ({ ...r, name: e.target.value }))}
+                    placeholder="Saturday skins"
                   />
-                </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
-                  {round.game === 'skins' && round.players.length > 2 && (
-                    <button className="btn ghost" onClick={() => removePlayer(p.id)} type="button">
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                  <Box mt={3}>
+                    <GameRules game={round.game} defaultOpen={false} />
+                  </Box>
+                </FormControl>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {round.game !== 'wolf' && (
-                <button className="btn" onClick={addPlayer} disabled={round.players.length >= 4} type="button">
-                  + Add player
-                </button>
-              )}
-              <button
-                className="btn primary"
-                disabled={!canStart}
-                onClick={() => {
-                  track('round_start', { game: round.game, playerCount: round.players.length })
-                  setScreen('quick')
-                }}
-                type="button"
-              >
-                Start round →
-              </button>
-              <button
-                className="btn ghost"
-                disabled={!canStart}
-                onClick={() => {
-                  track('nav_screen', { from: 'setup', to: 'holes', game: round.game })
-                  setScreen('holes')
-                }}
-                type="button"
-              >
-                Grid view
-              </button>
-              <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                New game
-              </button>
-            </div>
-          </div>
-        </div>
+                {round.game === 'skins' ? (
+                  <FormControl>
+                    <FormLabel>Stake ($/skin)</FormLabel>
+                    <Input
+                      value={dollarsStringFromCents(round.stakeCents || 0)}
+                      onChange={(e) => setRound((r) => ({ ...r, stakeCents: centsFromDollarsString(e.target.value) }))}
+                      inputMode="decimal"
+                      placeholder="5"
+                    />
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                      Gross skins. Carryovers on ties. Tie after 18 remains a tie.
+                    </Text>
+                  </FormControl>
+                ) : round.game === 'wolf' ? (
+                  <Stack spacing={3}>
+                    <FormControl>
+                      <FormLabel>Points per hole</FormLabel>
+                      <Input
+                        value={String(round.wolfPointsPerHole ?? 1)}
+                        onChange={(e) => {
+                          const n = Number(e.target.value)
+                          if (!Number.isFinite(n)) return
+                          setRound((r) => ({ ...r, wolfPointsPerHole: Math.max(1, Math.min(10, Math.round(n))) }))
+                        }}
+                        inputMode="numeric"
+                        placeholder="1"
+                      />
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>$ per point (optional)</FormLabel>
+                      <Input
+                        value={dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)}
+                        onChange={(e) => setRound((r) => ({ ...r, wolfDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
+                        inputMode="decimal"
+                        placeholder=""
+                      />
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                        Wolf (v1): 4 players only. Wolf rotates each hole. In Quick mode, pick the Wolf’s partner (or Lone) before entering scores.
+                      </Text>
+                    </FormControl>
+                  </Stack>
+                ) : (
+                  <FormControl>
+                    <FormLabel>$ per point (optional)</FormLabel>
+                    <Input
+                      value={dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)}
+                      onChange={(e) => setRound((r) => ({ ...r, bbbDollarsPerPointCents: centsFromDollarsString(e.target.value) }))}
+                      inputMode="decimal"
+                      placeholder=""
+                    />
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                      Settlement uses points × $/pt when set.
+                    </Text>
+                  </FormControl>
+                )}
+              </SimpleGrid>
+
+              <Divider />
+
+              <Box>
+                <HStack justify="space-between" align="baseline" mb={2}>
+                  <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                    Players ({round.game === 'wolf' ? '4' : '2–4'})
+                  </Text>
+                  {round.game !== 'wolf' && (
+                    <Button onClick={addPlayer} isDisabled={round.players.length >= 4} variant="secondary" size="sm" type="button">
+                      + Add player
+                    </Button>
+                  )}
+                </HStack>
+
+                {round.game === 'wolf' && (
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
+                    Wolf is 4 players only (v1). Wolf rotates each hole. Partner is chosen per hole in Quick mode.
+                  </Text>
+                )}
+
+                <VStack spacing={3} align="stretch">
+                  {round.players.map((p, idx) => (
+                    <HStack key={p.id} spacing={3} align="center">
+                      <Input
+                        ref={(el) => {
+                          if (!el) return
+                          if (focusPlayerId.current && focusPlayerId.current === p.id) {
+                            queueMicrotask(() => el.focus())
+                            focusPlayerId.current = null
+                          }
+                        }}
+                        value={p.name}
+                        onChange={(e) => updatePlayer(p.id, { name: e.target.value })}
+                        placeholder={`Player ${idx + 1}`}
+                      />
+                      {round.game === 'skins' && round.players.length > 2 && (
+                        <Button variant="tertiary" size="sm" onClick={() => removePlayer(p.id)} type="button">
+                          Remove
+                        </Button>
+                      )}
+                    </HStack>
+                  ))}
+                </VStack>
+              </Box>
+
+              <Divider />
+
+              <HStack spacing={3} flexWrap="wrap">
+                <Button
+                  variant="primary"
+                  isDisabled={!canStart}
+                  onClick={() => {
+                    track('round_start', { game: round.game, playerCount: round.players.length })
+                    setScreen('quick')
+                  }}
+                  type="button"
+                >
+                  Start round →
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  isDisabled={!canStart}
+                  onClick={() => {
+                    track('nav_screen', { from: 'setup', to: 'holes', game: round.game })
+                    setScreen('holes')
+                  }}
+                  type="button"
+                >
+                  Grid view
+                </Button>
+
+                <Button variant="tertiary" onClick={resetToGamePicker} type="button">
+                  New game
+                </Button>
+              </HStack>
+            </Stack>
+          </CardBody>
+        </Card>
       )}
 
       {screen === 'holes' && (
