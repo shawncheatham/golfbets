@@ -1689,58 +1689,60 @@ export default function App() {
           )}
 
           <Stack spacing={3}>
-            <Wrap spacing={2} justify={{ base: 'center', sm: 'space-between' }}>
-              <WrapItem>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setQuickHole((h) => Math.max(1, h - 1))}
-                  isDisabled={quickHole <= 1}
-                  type="button"
-                >
-                  Prev
-                </Button>
-              </WrapItem>
+            {/* Navigation (clean, no weird wrap) */}
+            <SimpleGrid columns={3} spacing={2}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setQuickHole((h) => Math.max(1, h - 1))}
+                isDisabled={quickHole <= 1}
+                type="button"
+                w="full"
+              >
+                Prev
+              </Button>
 
-              <WrapItem>
-                <Button size="sm" variant="outline" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole">
-                  Current
-                </Button>
-              </WrapItem>
+              <Button size="sm" variant="outline" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole" w="full">
+                Current
+              </Button>
 
-              <WrapItem>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    // Jump to next incomplete hole; if all complete, stay on 18.
-                    for (let h = Math.min(18, quickHole + 1); h <= 18; h++) {
-                      if (!isHoleComplete(h)) {
-                        setQuickHole(h)
-                        return
-                      }
-                    }
-                    // wrap
-                    for (let h = 1; h <= quickHole; h++) {
-                      if (!isHoleComplete(h)) {
-                        setQuickHole(h)
-                        return
-                      }
-                    }
-                    setQuickHole(18)
-                  }}
-                  type="button"
-                >
-                  Next incomplete
-                </Button>
-              </WrapItem>
+              <Button
+                size="sm"
+                variant="solid"
+                onClick={() => setQuickHole((h) => Math.min(18, h + 1))}
+                isDisabled={quickHole >= 18}
+                type="button"
+                w="full"
+              >
+                Next
+              </Button>
+            </SimpleGrid>
 
-              <WrapItem>
-                <Button size="sm" variant="solid" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} isDisabled={quickHole >= 18} type="button">
-                  Next
-                </Button>
-              </WrapItem>
-            </Wrap>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                // Jump to next incomplete hole; if all complete, stay on 18.
+                for (let h = Math.min(18, quickHole + 1); h <= 18; h++) {
+                  if (!isHoleComplete(h)) {
+                    setQuickHole(h)
+                    return
+                  }
+                }
+                // wrap
+                for (let h = 1; h <= quickHole; h++) {
+                  if (!isHoleComplete(h)) {
+                    setQuickHole(h)
+                    return
+                  }
+                }
+                setQuickHole(18)
+              }}
+              type="button"
+              w="full"
+            >
+              Next incomplete
+            </Button>
 
             <Wrap spacing={2} justify={{ base: 'center', sm: 'space-between' }}>
               <WrapItem>
