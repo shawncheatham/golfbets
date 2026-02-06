@@ -1688,86 +1688,112 @@ export default function App() {
             </div>
           )}
 
-          <div className="footerActions">
-              {quickHole > 1 ? (
-                <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
-                  Prev hole
-                </button>
-              ) : (
-                <span />
-              )}
+          <Stack spacing={3}>
+            <Wrap spacing={2} justify={{ base: 'center', sm: 'space-between' }}>
+              <WrapItem>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setQuickHole((h) => Math.max(1, h - 1))}
+                  isDisabled={quickHole <= 1}
+                  type="button"
+                >
+                  Prev
+                </Button>
+              </WrapItem>
 
-              {quickHole < 18 ? (
-                <button className="btn primary" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} type="button">
-                  Next hole
-                </button>
-              ) : (
-                <span />
-              )}
-              <button className="btn" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole">
-                Current
-              </button>
+              <WrapItem>
+                <Button size="sm" variant="outline" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole">
+                  Current
+                </Button>
+              </WrapItem>
 
-              <button
-                className="btn"
-                onClick={() => {
-                  // Jump to next incomplete hole; if all complete, stay on 18.
-                  for (let h = Math.min(18, quickHole + 1); h <= 18; h++) {
-                    if (!isHoleComplete(h)) {
-                      setQuickHole(h)
-                      return
+              <WrapItem>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    // Jump to next incomplete hole; if all complete, stay on 18.
+                    for (let h = Math.min(18, quickHole + 1); h <= 18; h++) {
+                      if (!isHoleComplete(h)) {
+                        setQuickHole(h)
+                        return
+                      }
                     }
-                  }
-                  // wrap
-                  for (let h = 1; h <= quickHole; h++) {
-                    if (!isHoleComplete(h)) {
-                      setQuickHole(h)
-                      return
+                    // wrap
+                    for (let h = 1; h <= quickHole; h++) {
+                      if (!isHoleComplete(h)) {
+                        setQuickHole(h)
+                        return
+                      }
                     }
-                  }
-                  setQuickHole(18)
-                }}
-                type="button"
-              >
-                Next incomplete
-              </button>
+                    setQuickHole(18)
+                  }}
+                  type="button"
+                >
+                  Next incomplete
+                </Button>
+              </WrapItem>
 
-              <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                Share status
-              </button>
+              <WrapItem>
+                <Button size="sm" variant="solid" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} isDisabled={quickHole >= 18} type="button">
+                  Next
+                </Button>
+              </WrapItem>
+            </Wrap>
+
+            <Wrap spacing={2} justify={{ base: 'center', sm: 'space-between' }}>
+              <WrapItem>
+                <Button size="sm" variant="secondary" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                  Share status
+                </Button>
+              </WrapItem>
 
               {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
-                <button className="btn" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                  Share settlement
-                </button>
+                <WrapItem>
+                  <Button size="sm" variant="secondary" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                    Share settlement
+                  </Button>
+                </WrapItem>
               )}
 
-              <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
-                {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
-              </button>
+              <WrapItem>
+                <Button size="sm" variant="solid" onClick={() => setScreen('settlement')} type="button">
+                  {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
+                </Button>
+              </WrapItem>
 
-              <button className="btn ghost" onClick={() => clearHole(quickHole)} disabled={!!round.locked} type="button">
-                Clear hole
-              </button>
+              <WrapItem>
+                <Button size="sm" variant="outline" onClick={() => clearHole(quickHole)} isDisabled={!!round.locked} type="button">
+                  Clear hole
+                </Button>
+              </WrapItem>
 
-              <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
-                Setup
-              </button>
+              <WrapItem>
+                <Button size="sm" variant="outline" onClick={() => setScreen('setup')} type="button">
+                  Setup
+                </Button>
+              </WrapItem>
 
-              {round.locked ? (
-                <button className="btn ghost" onClick={unlockRound} type="button">
-                  Unlock
-                </button>
-              ) : (
-                <button className="btn ghost" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                  Lock
-                </button>
-              )}
+              <WrapItem>
+                {round.locked ? (
+                  <Button size="sm" variant="outline" onClick={unlockRound} type="button">
+                    Unlock
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                    Lock
+                  </Button>
+                )}
+              </WrapItem>
 
-              <button className="btn ghost" onClick={resetToGamePicker} type="button">
-                New game
-              </button>
-            </div>
+              <WrapItem>
+                <Button size="sm" variant="outline" onClick={resetToGamePicker} type="button">
+                  New game
+                </Button>
+              </WrapItem>
+            </Wrap>
+          </Stack>
 
             </Stack>
           </CardBody>
