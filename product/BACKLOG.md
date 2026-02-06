@@ -1,32 +1,48 @@
 # Backlog
 
-## Now (UI polish)
-- [ ] Chakra migration: Setup + Quick mode controls + subtle transitions
+Opinionated and small. Keep slices shippable and feedback-driven.
 
-## Next (BBB — Bingo Bango Bongo, award-entry)
+## Now (next 1–2 PRs)
+- [ ] Performance / bundle hygiene
+  - investigate the Vite/Rollup warning about a >500kB minified JS chunk
+  - establish a baseline (bundle size + main route load time)
+  - consider low-risk code splitting (e.g., lazy-load settlement/standings screens)
+  - avoid premature complexity; keep changes reviewable
 
-### Epic: Add BBB game (award-entry)
-- [ ] Rules contract (v1): Bingo/Bango/Bongo winners or None; no ties in v1
-- [ ] Data model: store per-hole award winners (bingo/bango/bongo -> playerId|null)
-- [ ] Compute points by player + through-hole progress
-- [ ] Game picker: add BBB card/button (Beta tag optional)
-- [ ] Setup: players 2–4 + optional $/point
-- [ ] Quick mode:
-  - [ ] 3 award pickers (Bingo/Bango/Bongo) with None option
-  - [ ] Hole story summary (who got what; +points)
-  - [ ] Clear hole awards
-  - [ ] Next / current / next incomplete navigation
-- [ ] Grid mode:
-  - [ ] Table with Bingo/Bango/Bongo columns; cells show initials or —
-- [ ] Share:
-  - [ ] Share status (leaderboard points)
-  - [ ] If $/pt set: share settlement (suggested payments)
-- [ ] Accessibility: focus rings, tap targets, not color-only
-- [ ] Add fixtures for share output (prototype/fixtures)
+## Next
+- [ ] Instrumentation v2 (still local-first)
+  - formalize event names
+  - add a "debug export" button (copy JSON)
+  - roadmap: optional external vendor later
+- [ ] Accessibility QA (quick sweep)
+  - tap targets, focus states, aria labels, not color-only
+  - verify reduced-motion behavior
 
-## Later
-- [ ] BBB tie-handling (if users demand it)
-- [ ] BBB rules variants (gross vs net, etc.)
+## Later (product)
+- [ ] Distribution + learning loop
+  - weekend rounds: capture friction + failure cases
+  - add a lightweight feedback capture path (copy/paste prompt or link)
+- [ ] More games (only if they match the on-course interaction model)
+- [ ] "Chat referee" direction
+  - Phase 1: single scorekeeper
+  - Phase 2: all players participate
 
-## Parking lot
-- [ ] More games (only if they match the interaction model)
+## Done (shipped)
+
+### BBB (Bingo Bango Bongo)
+- [x] Award-entry BBB game (no stroke entry)
+- [x] Quick mode award pickers (Bingo/Bango/Bongo + None)
+- [x] Grid mode holes view
+- [x] Optional $/pt settlement (per-opponent-per-point, zero-sum)
+- [x] Share status + share settlement
+
+### Chakra migration (UI)
+- [x] Setup → Chakra
+- [x] Quick mode → Chakra (header/nav, chips/stepper, footer)
+- [x] Holes/Grid → Chakra (header/actions + interactive controls)
+- [x] Settlement/Standings → Chakra
+- [x] CSS cleanup + remaining legacy UI cleanup
+
+### Polish
+- [x] Typography/spacing pass (Inputs/Textareas/Table headers)
+- [x] A11y labels improvements (stepper + grid inputs)
