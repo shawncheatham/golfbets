@@ -935,7 +935,7 @@ export default function App() {
               <Box>
                 <HStack justify="space-between" align="baseline" mb={2}>
                   <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                    Players ({round.game === 'wolf' ? '' : '2–4'})
+                    Players
                   </Text>
                   {round.game !== 'wolf' && (
                     <Button onClick={addPlayer} isDisabled={round.players.length >= 4} variant="secondary" size="sm" type="button">
