@@ -1388,148 +1388,142 @@ export default function App() {
       )}
 
       {screen === 'quick' && (
-        <div className="card">
-          <div className="quickTop">
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <span>{round.name || GAME_META[round.game].short}</span>
-                <button className="btn ghost miniBtn" onClick={() => setScreen('settlement')} type="button" title="Open summary">
-                  Summary →
-                </button>
-              </div>
-              {round.game === 'skins' && skins && (
-                <div className="small">
-                  Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
-                  {(() => {
-                    const leader = round.players
-                      .slice()
-                      .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
-                    const n = leader ? skins.skinsWon[leader.id] || 0 : 0
-                    return leader ? ` • Leader: ${leader.name} (${n})` : ''
-                  })()}
-                </div>
-              )}
-              {round.game === 'wolf' && wolfHole && (
-                <div className="small">
-                  {(() => {
-                    const wolfName = round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'
-                    const partnerId = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) as PlayerId | null
-                    const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
-                    const otherNames = round.players
-                      .filter((p) => p.id !== wolfHole.wolfId && p.id !== partnerId)
-                      .map((p) => p.name)
-                      .join(' + ')
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={4}>
+              <HStack justify="space-between" align="flex-start" spacing={3} flexWrap="wrap">
+                <Box>
+                  <HStack spacing={3} align="center" flexWrap="wrap">
+                    <Text fontWeight={800} fontSize="lg">
+                      {round.name || GAME_META[round.game].short}
+                    </Text>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('settlement')} type="button">
+                      Summary →
+                    </Button>
+                    {round.locked && <Box className="pill">Locked ✅</Box>}
+                  </HStack>
 
-                    const teams = partnerName
-                      ? `Teams: ${wolfName} + ${partnerName} vs ${otherNames}`
-                      : `Lone Wolf: ${wolfName} vs ${otherNames}`
+                  {round.game === 'skins' && skins && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
+                      {(() => {
+                        const leader = round.players
+                          .slice()
+                          .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
+                        const n = leader ? skins.skinsWon[leader.id] || 0 : 0
+                        return leader ? ` • Leader: ${leader.name} (${n})` : ''
+                      })()}
+                    </Text>
+                  )}
 
-                    return (
-                      <>
-                        Hole {quickHole}: Wolf = {wolfName}
-                        {' • '}Pairing: {partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'}
-                        {' • '}{teams}
-                      </>
-                    )
-                  })()}
-                </div>
-              )}
-              {round.game === 'bbb' && bbb && (
-                <div className="small">
-                  BBB • Through {bbb.through}/18 • {round.players
-                    .slice()
-                    .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
-                    .map((p) => `${p.name} ${bbb.pointsByPlayer[p.id] || 0}`)
-                    .join(' • ')}
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              {round.locked && <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>}
-              <div className="holePicker">
-                {quickHole > 1 ? (
-                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} type="button">
+                  {round.game === 'wolf' && wolfHole && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      {(() => {
+                        const wolfName = round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'
+                        const partnerId = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) as PlayerId | null
+                        const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                        const otherNames = round.players
+                          .filter((p) => p.id !== wolfHole.wolfId && p.id !== partnerId)
+                          .map((p) => p.name)
+                          .join(' + ')
+
+                        const teams = partnerName ? `Teams: ${wolfName} + ${partnerName} vs ${otherNames}` : `Lone Wolf: ${wolfName} vs ${otherNames}`
+
+                        return `Hole ${quickHole}: Wolf = ${wolfName} • ${teams}`
+                      })()}
+                    </Text>
+                  )}
+
+                  {round.game === 'bbb' && bbb && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      BBB • Through {bbb.through}/18 • {round.players
+                        .slice()
+                        .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
+                        .map((p) => `${p.name} ${bbb.pointsByPlayer[p.id] || 0}`)
+                        .join(' • ')}
+                    </Text>
+                  )}
+                </Box>
+
+                <HStack spacing={2} align="center" flexWrap="wrap" justify="flex-end">
+                  <Button variant="tertiary" size="sm" onClick={() => setQuickHole((h) => Math.max(1, h - 1))} isDisabled={quickHole <= 1} type="button">
                     ←
-                  </button>
-                ) : (
-                  <span style={{ width: 44 }} />
-                )}
-                <select
-                  className="input"
-                  style={{ width: 110, padding: '10px 10px', fontWeight: 800 }}
-                  value={quickHole}
-                  onChange={(e) => setQuickHole(Number(e.target.value))}
-                >
-                  {Array.from({ length: 18 }, (_, i) => i + 1).map((h) => (
-                    <option key={h} value={h}>
-                      Hole {h}
-                    </option>
-                  ))}
-                </select>
-                {quickHole < 18 ? (
-                  <button className="btn ghost" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} type="button">
+                  </Button>
+
+                  <FormControl w="120px">
+                    <Input
+                      value={String(quickHole)}
+                      onChange={(e) => {
+                        const n = Number(e.target.value)
+                        if (!Number.isFinite(n)) return
+                        setQuickHole(Math.max(1, Math.min(18, Math.round(n))))
+                      }}
+                      inputMode="numeric"
+                      aria-label="Hole"
+                    />
+                  </FormControl>
+
+                  <Button variant="tertiary" size="sm" onClick={() => setQuickHole((h) => Math.min(18, h + 1))} isDisabled={quickHole >= 18} type="button">
                     →
-                  </button>
-                ) : (
-                  <span style={{ width: 44 }} />
-                )}
-              </div>
-              <button className="btn ghost" onClick={() => setScreen('holes')} type="button">
-                Grid
-              </button>
-            </div>
-          </div>
+                  </Button>
 
-          {round.game === 'skins' && skins && (
-            <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
-              <div className="label">Hole story</div>
-              {(() => {
-                const hr = skins.holeResults.find((x) => x.hole === (quickHole as HoleNumber))
-                if (!hr) return <div className="small">No data for this hole yet.</div>
+                  <Button variant="secondary" size="sm" onClick={() => setScreen('holes')} type="button">
+                    Grid
+                  </Button>
+                </HStack>
+              </HStack>
 
-                const entered = round.players.filter((p) => typeof round.strokesByHole[quickHole]?.[p.id] === 'number').length
-                const total = round.players.length
+              <Divider />
 
-                if (entered < total) {
-                  const atStake = 1 + (hr.carrySkins || 0)
-                  return (
-                    <div className="small">
+              {round.game === 'skins' && skins && (
+                <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
+                  <div className="label">Hole story</div>
+                    {(() => {
+                      const hr = skins.holeResults.find((x) => x.hole === (quickHole as HoleNumber))
+                      if (!hr) return <div className="small">No data for this hole yet.</div>
+                      
+                      const entered = round.players.filter((p) => typeof round.strokesByHole[quickHole]?.[p.id] === 'number').length
+                      const total = round.players.length
+                      
+                      if (entered < total) {
+                      const atStake = 1 + (hr.carrySkins || 0)
+                      return (
+                      <div className="small">
                       Enter scores ({entered}/{total}). If this hole has a winner: <b>{atStake}</b> skin(s) at stake.
-                    </div>
-                  )
-                }
-
-                if (hr.winnerId) {
-                  const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
-                  const wonCents = hr.wonSkins * (round.stakeCents || 0)
-                  return (
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      </div>
+                      )
+                      }
+                      
+                      if (hr.winnerId) {
+                      const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
+                      const wonCents = hr.wonSkins * (round.stakeCents || 0)
+                      return (
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                       <span className="pill">Winner: {winner}</span>
                       <span className="pill">Skins: {hr.wonSkins}</span>
                       <span className="pill">Value: {stakeLabel(wonCents)}</span>
                       <span className="pill">Carry resets</span>
-                    </div>
-                  )
-                }
-
-                // Tie
-                const before = hr.carrySkins || 0
-                const after = before + 1
-                const stake = round.stakeCents || 0
-                const nextSkins = after + 1
-                const nextCents = nextSkins * stake
-                return (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span className="pill">Result: tie</span>
-                    <span className="pill">Carry: {before} → {after}</span>
-                    <span className="pill">Carry resets</span>
-                    <span className="pill">Next hole: {nextSkins} skin(s) ({stakeLabel(nextCents)})</span>
+                      </div>
+                      )
+                      }
+                      
+                      // Tie
+                      const before = hr.carrySkins || 0
+                      const after = before + 1
+                      const stake = round.stakeCents || 0
+                      const nextSkins = after + 1
+                      const nextCents = nextSkins * stake
+                      return (
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span className="pill">Result: tie</span>
+                      <span className="pill">Carry: {before} → {after}</span>
+                      <span className="pill">Carry resets</span>
+                      <span className="pill">Next hole: {nextSkins} skin(s) ({stakeLabel(nextCents)})</span>
+                      </div>
+                      )
+                    })()}
                   </div>
-                )
-              })()}
-            </div>
-          )}
-
+                  )}
           {round.game === 'bbb' && (
             <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
               <div className="label">Hole awards</div>
@@ -1746,7 +1740,10 @@ export default function App() {
                 New game
               </button>
             </div>
-        </div>
+
+            </Stack>
+          </CardBody>
+        </Card>
       )}
 
       {screen === 'settlement' && round.game === 'skins' && settlement && (
