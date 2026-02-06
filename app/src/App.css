@@ -143,7 +143,6 @@ a { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .btn { transition: none; }
-  .chip { transition: none; }
 }
 
 .btn:not(:disabled):hover {
@@ -202,18 +201,14 @@ a { color: inherit; }
 /* Accessibility: make keyboard focus obvious in both themes */
 .btn:focus-visible,
 .input:focus-visible,
-.holeInput:focus-visible,
-.stepBtn:focus-visible,
-.chip:focus-visible {
+.holeInput:focus-visible {
   outline: 3px solid rgba(102, 227, 164, 0.65);
   outline-offset: 2px;
 }
 
 :root[data-theme='light'] .btn:focus-visible,
 :root[data-theme='light'] .input:focus-visible,
-:root[data-theme='light'] .holeInput:focus-visible,
-:root[data-theme='light'] .stepBtn:focus-visible,
-:root[data-theme='light'] .chip:focus-visible {
+:root[data-theme='light'] .holeInput:focus-visible {
   outline: 3px solid rgba(15, 123, 76, 0.60);
 }
 
@@ -347,19 +342,7 @@ a { color: inherit; }
   margin-top: 14px;
 }
 
-.quickTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
 
-.holePicker {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-}
 
 .bigNum {
   font-size: 36px;
@@ -384,67 +367,13 @@ a { color: inherit; }
   gap: 8px;
 }
 
-.chipRow {
-  display: inline-flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
 
-.chip {
-  min-width: 44px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: var(--pillBg);
-  color: var(--text);
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease;
-}
 
-:root[data-theme='light'] .chip {
-  border-color: rgba(10, 20, 30, 0.18);
-}
 
-.chip.active {
-  background: rgba(102, 227, 164, 0.20);
-  border-color: rgba(102, 227, 164, 0.45);
-}
 
-:root[data-theme='light'] .chip.active {
-  background: rgba(15, 123, 76, 0.14);
-  border-color: rgba(15, 123, 76, 0.35);
-}
 
-.chip:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.stepper {
-  display: inline-flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
 
-.stepBtn {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.05);
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.stepBtn:disabled { opacity: 0.35; }
-
-.stepVal {
-  width: 54px;
-  text-align: center;
-  font-weight: 800;
-  font-size: 18px;
-}
 
 .toggle {
   display: inline-flex;
