@@ -880,16 +880,13 @@ export default function App() {
 
                 {round.game === 'skins' ? (
                   <FormControl>
-                    <FormLabel>Stake ($/skin)</FormLabel>
+                    <FormLabel>$ per skin</FormLabel>
                     <Input
                       value={dollarsStringFromCents(round.stakeCents || 0)}
                       onChange={(e) => setRound((r) => ({ ...r, stakeCents: centsFromDollarsString(e.target.value) }))}
                       inputMode="decimal"
                       placeholder="5"
                     />
-                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
-                      Gross skins. Carryovers on ties. Tie after 18 remains a tie.
-                    </Text>
                   </FormControl>
                 ) : round.game === 'wolf' ? (
                   <Stack spacing={3}>
@@ -938,7 +935,7 @@ export default function App() {
               <Box>
                 <HStack justify="space-between" align="baseline" mb={2}>
                   <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                    Players ({round.game === 'wolf' ? '4' : '2–4'})
+                    Players ({round.game === 'wolf' ? '' : '2–4'})
                   </Text>
                   {round.game !== 'wolf' && (
                     <Button onClick={addPlayer} isDisabled={round.players.length >= 4} variant="secondary" size="sm" type="button">
@@ -947,11 +944,6 @@ export default function App() {
                   )}
                 </HStack>
 
-                {round.game === 'wolf' && (
-                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
-                    Wolf is 4 players only. Partner is chosen per hole in Quick mode.
-                  </Text>
-                )}
 
                 <VStack spacing={3} align="stretch">
                   {round.players.map((p, idx) => (
