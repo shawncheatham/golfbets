@@ -1303,7 +1303,14 @@ export default function App() {
                           <div className="holeCell">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <span className="holeNum">{hole}</span>
-                              <Button variant="tertiary" size="xs" onClick={() => clearHole(hole)} isDisabled={!!round.locked} type="button">
+                              <Button
+                                variant="tertiary"
+                                size="sm"
+                                onClick={() => clearHole(hole)}
+                                isDisabled={!!round.locked}
+                                type="button"
+                                aria-label={`Clear hole ${hole}`}
+                              >
                                 Clear
                               </Button>
                             </div>
@@ -1375,7 +1382,14 @@ export default function App() {
                           <div className="holeCell">
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <span className="holeNum">{hole}</span>
-                              <Button variant="tertiary" size="xs" onClick={() => clearHole(hole)} isDisabled={!!round.locked} type="button">
+                              <Button
+                                variant="tertiary"
+                                size="sm"
+                                onClick={() => clearHole(hole)}
+                                isDisabled={!!round.locked}
+                                type="button"
+                                aria-label={`Clear hole ${hole}`}
+                              >
                                 Clear
                               </Button>
                             </div>
