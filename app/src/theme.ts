@@ -96,7 +96,7 @@ export const theme = extendTheme({
     },
     Input: {
       defaultProps: {
-        size: 'lg',
+        size: 'md',
         variant: 'filled',
       },
       variants: {
@@ -115,6 +115,37 @@ export const theme = extendTheme({
             },
           },
         }),
+      },
+    },
+    Textarea: {
+      defaultProps: {
+        size: 'md',
+        variant: 'filled',
+      },
+      variants: {
+        filled: (props: any) => ({
+          borderRadius: '14px',
+          bg: props.colorMode === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50',
+          borderWidth: '1px',
+          borderColor: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'blackAlpha.100',
+          _hover: {
+            bg: props.colorMode === 'dark' ? 'whiteAlpha.100' : 'blackAlpha.100',
+          },
+          _focusVisible: {
+            boxShadow: 'outline',
+            borderColor: 'accent.500',
+          },
+        }),
+      },
+    },
+    Table: {
+      baseStyle: {
+        th: {
+          textTransform: 'none',
+          letterSpacing: 'normal',
+          fontWeight: 700,
+          fontSize: 'sm',
+        },
       },
     },
     Card: {
