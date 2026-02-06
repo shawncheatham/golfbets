@@ -1009,80 +1009,110 @@ export default function App() {
       )}
 
       {screen === 'holes' && (
-        <div className="card">
-          <div className="row">
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <div>
-                <div className="label">Round</div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{round.name || (round.game === 'wolf' ? 'Wolf' : round.game === 'bbb' ? 'BBB' : 'Skins')}</div>
-                {round.game === 'skins' && skins && (
-                  <div className="small">
-                    Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
-                    {(() => {
-                      const leader = round.players
-                        .slice()
-                        .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
-                      const n = leader ? skins.skinsWon[leader.id] || 0 : 0
-                      return leader ? ` • Leader: ${leader.name} (${n})` : ''
-                    })()}
-                  </div>
-                )}
-                {round.game === 'wolf' && wolf && (
-                  <div className="small">
-                    Points leader: {
-                      round.players
-                        .slice()
-                        .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))[0]?.name
-                    }
-                  </div>
-                )}
-                {round.game === 'bbb' && bbb && (
-                  <div className="small">
-                    Points leader: {
-                      round.players
-                        .slice()
-                        .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))[0]?.name
-                    }
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                {round.locked ? (
-                  <div className="pill" title="Round is locked (edits disabled)">Locked ✅</div>
-                ) : (
-                  <button className="btn" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
-                    Lock round
-                  </button>
-                )}
-                {round.locked && (
-                  <button className="btn ghost" onClick={unlockRound} type="button">
-                    Unlock
-                  </button>
-                )}
-                <button className="btn ghost" onClick={() => setScreen('quick')} type="button">
-                  Quick mode
-                </button>
-                <button className="btn ghost" onClick={() => setScreen('setup')} type="button">
-                  ← Setup
-                </button>
-                <button className="btn" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                  Share status
-                </button>
-                {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
-                  <button className={round.locked ? 'btn primary' : 'btn'} onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                    Share settlement
-                  </button>
-                )}
-                {round.game === 'bbb' && bbbSettlement && (round.locked || isRoundComplete()) && (
-                  <button className={round.locked ? 'btn primary' : 'btn'} onClick={copyBBBSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                    Share settlement
-                  </button>
-                )}
-                <button className="btn primary" onClick={() => setScreen('settlement')} type="button">
-                  {round.game === 'wolf' || round.game === 'bbb' ? 'Standings →' : 'Settlement →'}
-                </button>
-              </div>
-            </div>
+        <Card variant="outline">
+          <CardBody>
+            <Stack spacing={4}>
+              <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                    Round
+                  </Text>
+                  <Text fontSize="lg" fontWeight={800}>
+                    {round.name || (round.game === 'wolf' ? 'Wolf' : round.game === 'bbb' ? 'BBB' : 'Skins')}
+                  </Text>
+
+                  {round.game === 'skins' && skins && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      Carry: {skins.carryToNext} skin(s) (${((skins.carryToNext || 0) * (round.stakeCents || 0) / 100).toFixed(0)})
+                      {(() => {
+                        const leader = round.players
+                          .slice()
+                          .sort((a, b) => (skins.skinsWon[b.id] || 0) - (skins.skinsWon[a.id] || 0))[0]
+                        const n = leader ? skins.skinsWon[leader.id] || 0 : 0
+                        return leader ? ` • Leader: ${leader.name} (${n})` : ''
+                      })()}
+                    </Text>
+                  )}
+
+                  {round.game === 'wolf' && wolf && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      Points leader:{' '}
+                      {
+                        round.players
+                          .slice()
+                          .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))[0]?.name
+                      }
+                    </Text>
+                  )}
+
+                  {round.game === 'bbb' && bbb && (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
+                      Points leader:{' '}
+                      {
+                        round.players
+                          .slice()
+                          .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))[0]?.name
+                      }
+                    </Text>
+                  )}
+                </Box>
+
+                <Wrap spacing={2} justify="flex-end">
+                  <WrapItem>{round.locked && <Box className="pill">Locked ✅</Box>}</WrapItem>
+
+                  <WrapItem>
+                    {!round.locked ? (
+                      <Button variant="secondary" size="sm" onClick={() => lockRound(false)} type="button" title="Lock disables edits (useful once a round is final)">
+                        Lock round
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" size="sm" onClick={unlockRound} type="button">
+                        Unlock
+                      </Button>
+                    )}
+                  </WrapItem>
+
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
+                      Quick mode
+                    </Button>
+                  </WrapItem>
+
+                  <WrapItem>
+                    <Button variant="tertiary" size="sm" onClick={() => setScreen('setup')} type="button">
+                      ← Setup
+                    </Button>
+                  </WrapItem>
+
+                  <WrapItem>
+                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                      Share status
+                    </Button>
+                  </WrapItem>
+
+                  {round.game === 'skins' && settlement && (round.locked || isRoundComplete()) && (
+                    <WrapItem>
+                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                        Share settlement
+                      </Button>
+                    </WrapItem>
+                  )}
+
+                  {round.game === 'bbb' && bbbSettlement && (round.locked || isRoundComplete()) && (
+                    <WrapItem>
+                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={copyBBBSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                        Share settlement
+                      </Button>
+                    </WrapItem>
+                  )}
+
+                  <WrapItem>
+                    <Button variant="primary" size="sm" onClick={() => setScreen('settlement')} type="button">
+                      {round.game === 'wolf' || round.game === 'bbb' ? 'Standings →' : 'Settlement →'}
+                    </Button>
+                  </WrapItem>
+                </Wrap>
+              </HStack>
 
             {round.game === 'skins' && settlement && !round.locked && isRoundComplete() && (
               <div className="card" style={{ padding: 12, marginTop: 12 }}>
@@ -1385,8 +1415,9 @@ export default function App() {
                 <div className="small">Wolf rotates each hole (starting from Player 1 on hole 1). Choose partner in Quick mode (or play Lone Wolf).</div>
               </div>
             )}
-          </div>
-        </div>
+            </Stack>
+          </CardBody>
+        </Card>
       )}
 
       {screen === 'quick' && (
