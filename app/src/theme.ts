@@ -1,4 +1,5 @@
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react'
+import type { StyleFunctionProps } from '@chakra-ui/theme-tools'
 
 const config: ThemeConfig = {
   initialColorMode: 'system',
@@ -25,7 +26,7 @@ export const theme = extendTheme({
     accent,
   },
   styles: {
-    global: (props: any) => ({
+    global: (props: StyleFunctionProps) => ({
       body: {
         bg: props.colorMode === 'dark' ? 'gray.950' : 'gray.50',
         color: props.colorMode === 'dark' ? 'gray.100' : 'gray.900',
@@ -64,13 +65,13 @@ export const theme = extendTheme({
         },
       },
       variants: {
-        primary: (props: any) => ({
+        primary: (props: StyleFunctionProps) => ({
           bg: props.colorMode === 'dark' ? 'accent.500' : 'accent.500',
           color: 'white',
           _hover: { bg: 'accent.600' },
           _active: { bg: 'accent.700', transform: 'translateY(1px)' },
         }),
-        secondary: (props: any) => ({
+        secondary: (props: StyleFunctionProps) => ({
           bg: props.colorMode === 'dark' ? 'whiteAlpha.100' : 'blackAlpha.50',
           color: props.colorMode === 'dark' ? 'gray.100' : 'gray.900',
           _hover: {
@@ -81,7 +82,7 @@ export const theme = extendTheme({
             transform: 'translateY(1px)',
           },
         }),
-        tertiary: (props: any) => ({
+        tertiary: (props: StyleFunctionProps) => ({
           bg: 'transparent',
           borderWidth: '1px',
           borderColor: props.colorMode === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200',
@@ -100,7 +101,7 @@ export const theme = extendTheme({
         variant: 'filled',
       },
       variants: {
-        filled: (props: any) => ({
+        filled: (props: StyleFunctionProps) => ({
           field: {
             borderRadius: '14px',
             bg: props.colorMode === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50',
@@ -123,7 +124,7 @@ export const theme = extendTheme({
         variant: 'filled',
       },
       variants: {
-        filled: (props: any) => ({
+        filled: (props: StyleFunctionProps) => ({
           borderRadius: '14px',
           bg: props.colorMode === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50',
           borderWidth: '1px',
@@ -149,7 +150,7 @@ export const theme = extendTheme({
       },
     },
     Card: {
-      baseStyle: (props: any) => ({
+      baseStyle: (props: StyleFunctionProps) => ({
         container: {
           borderRadius: '20px',
           borderWidth: '1px',

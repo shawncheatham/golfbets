@@ -22,7 +22,6 @@ export function track(name: string, props?: Record<string, unknown>) {
 
   // Dev visibility (kept lightweight)
   try {
-    // eslint-disable-next-line no-console
     console.log('[track]', ev)
   } catch {
     // ignore
