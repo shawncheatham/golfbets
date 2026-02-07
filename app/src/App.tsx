@@ -40,7 +40,7 @@ import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { computeWolfSettlement } from './logic/wolfSettlement'
 import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
-import { track } from './logic/track'
+import { TRACK_EVENTS, exportTrackedEvents, track } from './logic/track'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
@@ -466,7 +466,7 @@ export default function App() {
 
     if (round.game === 'bbb') {
       if (!confirm(`Clear all awards for hole ${hole}?`)) return
-      track('bbb_hole_clear', { hole })
+      track(TRACK_EVENTS.bbb_hole_clear, { hole })
       setRound((r) => {
         if (r.game !== 'bbb') return r
         const cur = r.bbbAwardsByHole || {}
@@ -508,7 +508,7 @@ export default function App() {
   }
 
   function startNew(game: GameType) {
-    track('round_new', { game })
+    track(TRACK_EVENTS.round_new, { game })
     setRound(game === 'wolf' ? createEmptyWolfRound() : game === 'bbb' ? createEmptyBBBRound() : createEmptySkinsRound())
     setScreen('setup')
   }
@@ -609,7 +609,7 @@ export default function App() {
   async function copyStatus() {
     try {
       await navigator.clipboard.writeText(statusText())
-      track('share_status', { game: round.game })
+      track(TRACK_EVENTS.share_status, { game: round.game })
       alert('Copied status to clipboard')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -637,7 +637,7 @@ export default function App() {
   async function copyWolfSettlement() {
     try {
       await navigator.clipboard.writeText(wolfSettlementText())
-      track('share_settlement', { game: 'wolf', centsPerPoint: round.wolfDollarsPerPointCents || 0 })
+      track(TRACK_EVENTS.share_settlement, { game: 'wolf', centsPerPoint: round.wolfDollarsPerPointCents || 0 })
       alert('Copied settlement (ready to paste in the group chat)')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -665,7 +665,7 @@ export default function App() {
   async function copyBBBSettlement() {
     try {
       await navigator.clipboard.writeText(bbbSettlementText())
-      track('share_settlement', { game: 'bbb', centsPerPoint: round.bbbDollarsPerPointCents || 0 })
+      track(TRACK_EVENTS.share_settlement, { game: 'bbb', centsPerPoint: round.bbbDollarsPerPointCents || 0 })
       alert('Copied settlement (ready to paste in the group chat)')
     } catch {
       alert('Could not copy. You can manually select and copy the text.')
@@ -680,14 +680,14 @@ export default function App() {
   }
 
   function lockRound(andGoToSettlement = false) {
-    track('round_lock', { game: round.game, screen, andGoToSettlement })
+    track(TRACK_EVENTS.round_lock, { game: round.game, screen, andGoToSettlement })
     setRound((r) => ({ ...r, locked: true }))
     if (andGoToSettlement) setScreen('settlement')
   }
 
   function unlockRound() {
     if (!confirm('Unlock round? This allows edits and may change standings/settlement.')) return
-    track('round_unlock', { game: round.game, screen })
+    track(TRACK_EVENTS.round_unlock, { game: round.game, screen })
     setRound((r) => ({ ...r, locked: false }))
   }
 
@@ -720,7 +720,7 @@ export default function App() {
 
   function setBBBAwardForHole(hole: HoleNumber, award: BBBAwardType, winnerId: PlayerId | null) {
     if (round.locked) return
-    track('bbb_award_set', { hole, award, winnerId })
+    track(TRACK_EVENTS.bbb_award_set, { hole, award, winnerId })
     setRound((r) => {
       if (r.game !== 'bbb') return r
       const cur = r.bbbAwardsByHole || {}
@@ -812,12 +812,35 @@ export default function App() {
             </Button>
           </SimpleGrid>
 
+          <div style={{ height: 18 }} />
+
+          <HStack justify="space-between" align="center" mb={2}>
+            <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+              Recent rounds
+            </Text>
+
+            <Button
+              variant="tertiary"
+              size="sm"
+              type="button"
+              onClick={async () => {
+                try {
+                  const payload = exportTrackedEvents()
+                  await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+                  track(TRACK_EVENTS.debug_export, { eventCount: payload.events.length })
+                  alert('Copied debug export JSON to clipboard')
+                } catch {
+                  alert('Could not copy debug export. You can open DevTools and read localStorage instead.')
+                }
+              }}
+              title="Copy local debug events (JSON)"
+            >
+              Debug export
+            </Button>
+          </HStack>
+
           {stored.rounds.length > 0 && (
             <>
-              <div style={{ height: 18 }} />
-              <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
-                Recent rounds
-              </Text>
               <Table size="sm">
                 <Thead>
                   <Tr>
@@ -1013,7 +1036,7 @@ export default function App() {
                   variant="primary"
                   isDisabled={!canStart}
                   onClick={() => {
-                    track('round_start', { game: round.game, playerCount: round.players.length })
+                    track(TRACK_EVENTS.round_start, { game: round.game, playerCount: round.players.length })
                     setScreen('quick')
                   }}
                   type="button"
@@ -1025,7 +1048,7 @@ export default function App() {
                   variant="secondary"
                   isDisabled={!canStart}
                   onClick={() => {
-                    track('nav_screen', { from: 'setup', to: 'holes', game: round.game })
+                    track(TRACK_EVENTS.nav_screen, { from: 'setup', to: 'holes', game: round.game })
                     setScreen('holes')
                   }}
                   type="button"
