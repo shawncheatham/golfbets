@@ -1115,7 +1115,13 @@ export default function App() {
                 </Box>
 
                 <Wrap spacing={2} justify="flex-end">
-                  <WrapItem>{round.locked && <Box className="pill">Locked ✅</Box>}</WrapItem>
+                  <WrapItem>
+                    {round.locked && (
+                      <Box className="pill" aria-label="Locked">
+                        Locked <span role="img" aria-label="Locked">✅</span>
+                      </Box>
+                    )}
+                  </WrapItem>
 
                   <WrapItem>
                     {!round.locked ? (
@@ -1272,7 +1278,9 @@ export default function App() {
                           <div className="holeCell">{nameFor(a?.bingo)}</div>
                           <div className="holeCell">{nameFor(a?.bango)}</div>
                           <div className="holeCell">{nameFor(a?.bongo)}</div>
-                          <div className="holeCell" style={{ textAlign: 'right' }}>{done ? '✅' : '—'}</div>
+                          <div className="holeCell" style={{ textAlign: 'right' }}>
+                            {done ? <span role="img" aria-label="Complete">✅</span> : <span aria-label="Incomplete">—</span>}
+                          </div>
                         </div>
                       )
                     })}
@@ -1537,7 +1545,11 @@ export default function App() {
                     <Button variant="tertiary" size="sm" onClick={() => setScreen('settlement')} type="button">
                       Summary →
                     </Button>
-                    {round.locked && <Box className="pill">Locked ✅</Box>}
+                    {round.locked && (
+                      <Box className="pill" aria-label="Locked">
+                        Locked <span role="img" aria-label="Locked">✅</span>
+                      </Box>
+                    )}
                   </HStack>
 
                   {round.game === 'skins' && skins && (
