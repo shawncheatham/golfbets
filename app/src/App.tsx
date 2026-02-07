@@ -22,6 +22,7 @@ import {
   Wrap,
   WrapItem,
   Table,
+  TableContainer,
   Thead,
   Tbody,
   Tr,
@@ -841,7 +842,8 @@ export default function App() {
 
           {stored.rounds.length > 0 && (
             <>
-              <Table size="sm">
+              <TableContainer w="full" overflowX="auto" borderRadius="16px">
+                <Table size="sm">
                 <Thead>
                   <Tr>
                     <Th>Game</Th>
@@ -877,7 +879,14 @@ export default function App() {
                               : stakeLabel(r.stakeCents || 0)}
                         </Td>
                         <Td textAlign="right">
-                          <HStack justify="flex-end" spacing={2}>
+                          <Stack
+                            direction={{ base: 'column', sm: 'row' }}
+                            align={{ base: 'stretch', sm: 'center' }}
+                            justify={{ base: 'flex-end', sm: 'flex-end' }}
+                            spacing={2}
+                            w={{ base: '140px', sm: 'auto' }}
+                            ml="auto"
+                          >
                             <Button variant="tertiary" size="sm" onClick={() => loadExistingRound(r)} type="button">
                               Open
                             </Button>
@@ -894,12 +903,13 @@ export default function App() {
                             >
                               Delete
                             </Button>
-                          </HStack>
+                          </Stack>
                         </Td>
                       </Tr>
                     ))}
                 </Tbody>
-              </Table>
+                </Table>
+              </TableContainer>
             </>
           )}
         </Box>
