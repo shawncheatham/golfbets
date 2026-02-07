@@ -1852,11 +1852,20 @@ export default function App() {
                 isDisabled={quickHole <= 1}
                 type="button"
                 w="full"
+                aria-label="Previous hole"
               >
                 Prev
               </Button>
 
-              <Button size="sm" variant="outline" onClick={() => setQuickHole(currentHole())} type="button" title="Jump to the current hole" w="full">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setQuickHole(currentHole())}
+                type="button"
+                title="Jump to the current hole"
+                w="full"
+                aria-label="Jump to current hole"
+              >
                 Current
               </Button>
 
@@ -1867,6 +1876,7 @@ export default function App() {
                 isDisabled={quickHole >= 18}
                 type="button"
                 w="full"
+                aria-label="Next hole"
               >
                 Next
               </Button>
