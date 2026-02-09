@@ -18,6 +18,7 @@ import {
   Text,
   Textarea,
   useColorMode,
+  useToast,
   VStack,
   Wrap,
   WrapItem,
@@ -196,6 +197,10 @@ function roundLastUpdatedLabel(round: Round): string | null {
   })
 }
 
+function withSelectedMark(selected: boolean, label: string | number): string {
+  return selected ? `✓ ${label}` : String(label)
+}
+
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -301,6 +306,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('game')
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const toast = useToast()
   const { colorMode, setColorMode } = useColorMode()
 
   useEffect(() => {
@@ -399,6 +405,14 @@ export default function App() {
   }
 
   const focusPlayerId = useRef<PlayerId | null>(null)
+  const undoActionId = useRef(0)
+  const undoRef = useRef<{ id: number; timeoutId: number; restore: () => void; toastId: string } | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (undoRef.current) window.clearTimeout(undoRef.current.timeoutId)
+    }
+  }, [])
 
   function addPlayer() {
     setRound((r) => {
@@ -552,22 +566,49 @@ export default function App() {
     if (round.game === 'bbb') {
       if (!confirm(`Clear all awards for hole ${hole}?`)) return
       track(TRACK_EVENTS.bbb_hole_clear, { hole })
+      let previousAwards: ReturnType<typeof emptyHoleAwards> | null = null
       setRound((r) => {
         if (r.game !== 'bbb') return r
         const cur = r.bbbAwardsByHole || {}
+        previousAwards = cur[hole as HoleNumber] ? { ...cur[hole as HoleNumber] } : null
+        if (!previousAwards) return r
         const next = { ...cur }
         delete next[hole as HoleNumber]
         return { ...r, bbbAwardsByHole: next }
       })
+      if (previousAwards) {
+        const restoreAwards = previousAwards as ReturnType<typeof emptyHoleAwards>
+        registerUndo({
+          label: `Cleared hole ${hole}`,
+          restore: () =>
+            setRound((r) => {
+              if (r.game !== 'bbb') return r
+              const cur = r.bbbAwardsByHole || {}
+              return {
+                ...r,
+                bbbAwardsByHole: {
+                  ...cur,
+                  [hole as HoleNumber]: restoreAwards,
+                },
+              }
+            }),
+        })
+      }
       return
     }
 
     if (!confirm(`Clear all scores for hole ${hole}?`)) return
 
+    let previousHole: Record<PlayerId, number | null> | null = null
+    let didClear = false
     setRound((r) => {
       const holeRec = r.strokesByHole[hole] || {}
+      previousHole = { ...holeRec }
       const nextHole: Record<PlayerId, number | null> = { ...holeRec }
       for (const p of r.players) nextHole[p.id] = null
+      const hadAnyValue = r.players.some((p) => typeof holeRec[p.id] === 'number')
+      if (!hadAnyValue) return r
+      didClear = true
       return {
         ...r,
         strokesByHole: {
@@ -575,6 +616,106 @@ export default function App() {
           [hole]: nextHole,
         },
       }
+    })
+    if (didClear && previousHole) {
+      const restoreHole = previousHole as Record<PlayerId, number | null>
+      registerUndo({
+        label: `Cleared hole ${hole}`,
+        restore: () =>
+          setRound((r) => ({
+            ...r,
+            strokesByHole: {
+              ...r.strokesByHole,
+              [hole]: restoreHole,
+            },
+          })),
+      })
+    }
+  }
+
+  function clearScoreWithUndo(hole: number, playerId: PlayerId) {
+    if (round.locked || round.game === 'bbb') return
+    let previousValue: number | null | undefined
+    setRound((r) => {
+      const holeRec = r.strokesByHole[hole] || {}
+      previousValue = holeRec[playerId] ?? null
+      if (previousValue === null) return r
+      return {
+        ...r,
+        strokesByHole: {
+          ...r.strokesByHole,
+          [hole]: {
+            ...holeRec,
+            [playerId]: null,
+          },
+        },
+      }
+    })
+    if (typeof previousValue !== 'number') return
+    const playerName = round.players.find((p) => p.id === playerId)?.name || 'Player'
+    registerUndo({
+      label: `Cleared ${playerName} on hole ${hole}`,
+      restore: () =>
+        setRound((r) => {
+          const holeRec = r.strokesByHole[hole] || {}
+          return {
+            ...r,
+            strokesByHole: {
+              ...r.strokesByHole,
+              [hole]: {
+                ...holeRec,
+                [playerId]: previousValue ?? null,
+              },
+            },
+          }
+        }),
+    })
+  }
+
+  function registerUndo(params: { label: string; restore: () => void }) {
+    if (undoRef.current) {
+      window.clearTimeout(undoRef.current.timeoutId)
+      toast.close(undoRef.current.toastId)
+      undoRef.current = null
+    }
+
+    const id = ++undoActionId.current
+    const toastId = `undo-${id}`
+    const timeoutId = window.setTimeout(() => {
+      if (undoRef.current?.id === id) undoRef.current = null
+      toast.close(toastId)
+    }, 8000)
+
+    undoRef.current = { id, timeoutId, restore: params.restore, toastId }
+
+    toast({
+      id: toastId,
+      duration: 8000,
+      position: 'bottom',
+      isClosable: true,
+      render: () => (
+        <Box className="undoToast">
+          <Text fontSize="sm" fontWeight={700}>
+            {params.label}
+          </Text>
+          <Button
+            size="sm"
+            minH="44px"
+            variant="secondary"
+            onClick={() => {
+              const cur = undoRef.current
+              if (!cur || cur.id !== id) return
+              window.clearTimeout(cur.timeoutId)
+              undoRef.current = null
+              toast.close(toastId)
+              cur.restore()
+            }}
+            type="button"
+          >
+            Undo
+          </Button>
+        </Box>
+      ),
     })
   }
 
@@ -932,7 +1073,7 @@ export default function App() {
             </Button>
 
             <Button
-              variant={activeSavedRound ? 'secondary' : 'primary'}
+              variant="secondary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('wolf')}
               type="button"
@@ -944,7 +1085,7 @@ export default function App() {
             </Button>
 
             <Button
-              variant={activeSavedRound ? 'secondary' : 'primary'}
+              variant="secondary"
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('bbb')}
               type="button"
@@ -1924,18 +2065,18 @@ export default function App() {
                     <div className="small" style={{ fontWeight: 800, marginBottom: 6 }}>{label}</div>
                     <Wrap spacing={2}>
                       <WrapItem>
-                        <Button
-                          size="sm"
-                          variant={awards[award] === null ? 'solid' : 'outline'}
+                            <Button
+                              size="sm"
+                              variant={awards[award] === null ? 'solid' : 'outline'}
                           onClick={() => setBBBAwardForHole(hole, award, null)}
                           isDisabled={!!round.locked}
                           type="button"
                           title="No winner / unknown"
                           aria-pressed={awards[award] === null}
-                        >
-                          None
-                        </Button>
-                      </WrapItem>
+                            >
+                              {withSelectedMark(awards[award] === null, 'None')}
+                            </Button>
+                          </WrapItem>
                       {round.players.map((p) => (
                         <WrapItem key={p.id}>
                           <Button
@@ -1946,7 +2087,7 @@ export default function App() {
                             type="button"
                             aria-pressed={awards[award] === p.id}
                           >
-                            {p.name}
+                            {withSelectedMark(awards[award] === p.id, p.name)}
                           </Button>
                         </WrapItem>
                       ))}
@@ -1983,7 +2124,7 @@ export default function App() {
                           type="button"
                           aria-pressed={selected}
                         >
-                          {p.name}
+                          {withSelectedMark(selected, p.name)}
                         </Button>
                       </WrapItem>
                     )
@@ -2001,7 +2142,7 @@ export default function App() {
                         title="Play lone wolf"
                         aria-pressed={selected}
                       >
-                        Lone
+                        {withSelectedMark(selected, 'Lone')}
                       </Button>
                     </WrapItem>
                   )
@@ -2034,7 +2175,7 @@ export default function App() {
                               title={`Set ${p.name} to ${n}`}
                               aria-pressed={val === n}
                             >
-                              {n}
+                              {withSelectedMark(val === n, n)}
                             </Button>
                           </WrapItem>
                         ))}
@@ -2073,7 +2214,7 @@ export default function App() {
                       size="sm"
                       variant="tertiary"
                       isDisabled={!!round.locked}
-                      onClick={() => setStroke(quickHole, p.id, '')}
+                      onClick={() => clearScoreWithUndo(quickHole, p.id)}
                       title="Clear score"
                       type="button"
                     >
@@ -2114,7 +2255,7 @@ export default function App() {
 
               <Button
                 size="sm"
-                variant="solid"
+                variant="outline"
                 onClick={() => setQuickHole((h) => Math.min(18, h + 1))}
                 isDisabled={quickHole >= 18}
                 type="button"
@@ -2156,7 +2297,7 @@ export default function App() {
               )}
 
               <WrapItem>
-                <Button size="sm" variant="solid" onClick={() => setScreen('settlement')} type="button">
+                <Button size="sm" variant="secondary" onClick={() => setScreen('settlement')} type="button">
                   {round.game === 'wolf' ? 'Standings →' : 'Settlement →'}
                 </Button>
               </WrapItem>
