@@ -180,6 +180,22 @@ function dollarsStringFromCents(cents: number): string {
   return d % 1 === 0 ? `${d.toFixed(0)}` : `${d.toFixed(2)}`
 }
 
+function roundStakeOrPointsLabel(round: Round): string {
+  if (round.game === 'wolf') return wolfLabel(round.wolfPointsPerHole)
+  if (round.game === 'bbb') return `$${((round.bbbDollarsPerPointCents || 0) / 100).toFixed(0)}/pt`
+  return stakeLabel(round.stakeCents || 0)
+}
+
+function roundLastUpdatedLabel(round: Round): string | null {
+  if (!round.createdAt || !Number.isFinite(round.createdAt)) return null
+  return new Date(round.createdAt).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -284,6 +300,7 @@ function createEmptyBBBRound(): Round {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('game')
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const { colorMode, setColorMode } = useColorMode()
 
   useEffect(() => {
@@ -336,6 +353,14 @@ export default function App() {
   }, [round, bbb])
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
+  const recentRounds = useMemo(
+    () =>
+      stored.rounds
+        .slice()
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, 10),
+    [stored],
+  )
   const activeSavedRound = useMemo(() => {
     const id = stored.activeRoundId
     if (!id) return null
@@ -937,29 +962,91 @@ export default function App() {
               Recent rounds
             </Text>
 
-            <Button
-              variant="tertiary"
-              size="sm"
-              type="button"
-              onClick={async () => {
-                try {
-                  const payload = exportTrackedEvents()
-                  await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
-                  track(TRACK_EVENTS.debug_export, { eventCount: payload.events.length })
-                  alert('Copied debug export JSON to clipboard')
-                } catch {
-                  alert('Could not copy debug export. You can open DevTools and read localStorage instead.')
-                }
-              }}
-              title="Copy local debug events (JSON)"
-            >
-              Debug export
+            <Button variant="tertiary" size="sm" type="button" onClick={() => setShowAdvanced((v) => !v)} aria-expanded={showAdvanced}>
+              {showAdvanced ? 'Hide advanced' : 'Advanced'}
             </Button>
           </HStack>
 
-          {stored.rounds.length > 0 && (
+          {showAdvanced && (
+            <Box borderWidth="1px" borderRadius="12px" p={3} mb={3}>
+              <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                Diagnostics
+              </Text>
+              <Button
+                variant="tertiary"
+                size="sm"
+                type="button"
+                onClick={async () => {
+                  try {
+                    const payload = exportTrackedEvents()
+                    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+                    track(TRACK_EVENTS.debug_export, { eventCount: payload.events.length })
+                    alert('Copied debug export JSON to clipboard')
+                  } catch {
+                    alert('Could not copy debug export. You can open DevTools and read localStorage instead.')
+                  }
+                }}
+                title="Copy local debug events (JSON)"
+              >
+                Debug export
+              </Button>
+            </Box>
+          )}
+
+          {recentRounds.length > 0 && (
             <>
-              <TableContainer w="full" overflowX="auto" borderRadius="16px">
+              <Stack spacing={3} display={{ base: 'flex', md: 'none' }}>
+                {recentRounds.map((r) => {
+                  const label = r.name || (r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins')
+                  const lastUpdated = roundLastUpdatedLabel(r)
+
+                  return (
+                    <Box key={r.id} borderWidth="1px" borderRadius="12px" p={3}>
+                      <Text fontWeight={700}>{label}</Text>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                        {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                      </Text>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                        {r.players.map((p) => p.name).join(', ')}
+                      </Text>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                        {roundStakeOrPointsLabel(r)}
+                      </Text>
+                      {lastUpdated && (
+                        <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                          Last updated {lastUpdated}
+                        </Text>
+                      )}
+                      <SimpleGrid columns={2} spacing={2} mt={3}>
+                        <Button
+                          variant="tertiary"
+                          size="md"
+                          minH="44px"
+                          onClick={() => loadExistingRound(r)}
+                          type="button"
+                        >
+                          Open
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="md"
+                          minH="44px"
+                          onClick={() => {
+                            const ok = confirm(`Delete “${label}”?`)
+                            if (!ok) return
+                            deleteExistingRound(r.id)
+                          }}
+                          type="button"
+                        >
+                          Delete
+                        </Button>
+                      </SimpleGrid>
+                    </Box>
+                  )
+                })}
+              </Stack>
+
+              <TableContainer w="full" overflowX="auto" borderRadius="16px" display={{ base: 'none', md: 'block' }}>
                 <Table size="sm">
                 <Thead>
                   <Tr>
@@ -971,11 +1058,7 @@ export default function App() {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {stored.rounds
-                    .slice()
-                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-                    .slice(0, 10)
-                    .map((r) => (
+                  {recentRounds.map((r) => (
                       <Tr key={r.id}>
                         <Td>
                           <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
@@ -989,11 +1072,7 @@ export default function App() {
                           </Text>
                         </Td>
                         <Td textAlign="right">
-                          {r.game === 'wolf'
-                            ? wolfLabel(r.wolfPointsPerHole)
-                            : r.game === 'bbb'
-                              ? `$${((r.bbbDollarsPerPointCents || 0) / 100).toFixed(0)}/pt`
-                              : stakeLabel(r.stakeCents || 0)}
+                          {roundStakeOrPointsLabel(r)}
                         </Td>
                         <Td textAlign="right">
                           <Stack
