@@ -341,6 +341,17 @@ export default function App() {
     if (!id) return null
     return stored.rounds.find((r) => r.id === id) || null
   }, [stored])
+  const activeRoundThrough = useMemo(() => {
+    if (!activeSavedRound) return null
+    if (activeSavedRound.game === 'bbb') return computeBBB(activeSavedRound).through
+
+    for (let h = 18; h >= 1; h--) {
+      const by = activeSavedRound.strokesByHole[h]
+      const complete = activeSavedRound.players.every((p) => typeof by?.[p.id] === 'number')
+      if (complete) return h
+    }
+    return 0
+  }, [activeSavedRound])
 
   const canStart = useMemo(() => {
     if (!allPlayersHaveNames) return false
@@ -836,13 +847,24 @@ export default function App() {
             </Text>
 
             {activeSavedRound && (
-              <Box borderWidth="1px" borderRadius="12px" p={3}>
-                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
-                  Active round: {activeSavedRound.name || GAME_META[activeSavedRound.game].short}
+              <Box borderWidth="1px" borderRadius="12px" p={3} w="full">
+                <Text fontSize="sm" fontWeight={700}>
+                  Active round
                 </Text>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                  {GAME_META[activeSavedRound.game].label} • {activeSavedRound.name || GAME_META[activeSavedRound.game].short}
+                </Text>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                  {activeSavedRound.players.map((p) => p.name).join(', ')}
+                </Text>
+                <HStack spacing={2} mb={3} flexWrap="wrap">
+                  <Box className="pill">Through {activeRoundThrough ?? 0}/18</Box>
+                  <Box className="pill">Saved locally</Box>
+                </HStack>
                 <Button
                   variant="primary"
-                  size="sm"
+                  size="md"
+                  w="full"
                   type="button"
                   onClick={() => {
                     track(TRACK_EVENTS.nav_screen, { from: 'game', to: 'quick', resume: true, game: activeSavedRound.game })
@@ -867,12 +889,12 @@ export default function App() {
           </Stack>
 
           <Text fontSize="md" fontWeight={700} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
-            Choose a game
+            {activeSavedRound ? 'Start a new round' : 'Choose a game'}
           </Text>
 
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
             <Button
-              variant="primary"
+              variant={activeSavedRound ? 'secondary' : 'primary'}
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('skins')}
               type="button"
@@ -884,7 +906,7 @@ export default function App() {
             </Button>
 
             <Button
-              variant="primary"
+              variant={activeSavedRound ? 'secondary' : 'primary'}
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('wolf')}
               type="button"
@@ -896,7 +918,7 @@ export default function App() {
             </Button>
 
             <Button
-              variant="primary"
+              variant={activeSavedRound ? 'secondary' : 'primary'}
               rightIcon={<Icon as={ChevronRight} boxSize={4} aria-hidden="true" />}
               onClick={() => startNew('bbb')}
               type="button"
