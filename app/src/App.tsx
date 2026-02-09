@@ -128,8 +128,8 @@ function loadTheme(): Theme {
   } catch {
     // ignore
   }
-  // default: dark (matches current design)
-  return 'dark'
+  // default: light for first-time users
+  return 'light'
 }
 
 function applyTheme(theme: Theme) {
