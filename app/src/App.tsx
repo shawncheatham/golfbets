@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type ComponentType, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
@@ -30,7 +30,7 @@ import {
   Th,
   Td,
 } from '@chakra-ui/react'
-import { BookOpen, ChevronRight, Dice5, Moon, RotateCw, Sun, Trophy, Users } from 'lucide-react'
+import { BookOpen, ChevronRight, Moon, RotateCw, Sun } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -43,21 +43,28 @@ import { computeWolfSettlement } from './logic/wolfSettlement'
 import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 import { TRACK_EVENTS, exportTrackedEvents, track } from './logic/track'
+import { BBBBadge, SkinsBadge, WolfBadge } from './assets/gameBadges'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
 type GameMeta = {
   label: string
   short: string
-  Icon: typeof Sun
+  Icon: ComponentType
   rules: string[]
+}
+
+const GAME_BADGE_ICON: Record<GameType, ComponentType> = {
+  skins: SkinsBadge,
+  wolf: WolfBadge,
+  bbb: BBBBadge,
 }
 
 const GAME_META: Record<GameType, GameMeta> = {
   skins: {
     label: 'Skins',
     short: 'Skins',
-    Icon: Dice5,
+    Icon: GAME_BADGE_ICON.skins,
     rules: [
       'Each hole is worth 1 skin (+ carries).',
       'Lowest score wins the skin. Ties carry to the next hole.',
@@ -67,7 +74,7 @@ const GAME_META: Record<GameType, GameMeta> = {
   wolf: {
     label: 'Wolf',
     short: 'Wolf',
-    Icon: Users,
+    Icon: GAME_BADGE_ICON.wolf,
     rules: [
       'Wolf rotates each hole. Choose partner (or Lone).',
       'Best-ball teams compete each hole for points.',
@@ -77,7 +84,7 @@ const GAME_META: Record<GameType, GameMeta> = {
   bbb: {
     label: 'Bingo Bango Bongo',
     short: 'BBB',
-    Icon: Trophy,
+    Icon: GAME_BADGE_ICON.bbb,
     rules: [
       'Each hole has 3 awards: Bingo (first on green), Bango (closest), Bongo (first in).',
       'Award-entry only (no strokes). 1 point per award won.',
@@ -1059,7 +1066,11 @@ export default function App() {
                   Active round
                 </Text>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                  {GAME_META[activeSavedRound.game].label} • {activeSavedRound.name || GAME_META[activeSavedRound.game].short}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Icon as={GAME_META[activeSavedRound.game].Icon as ComponentType} boxSize={4} aria-hidden="true" />
+                    {GAME_META[activeSavedRound.game].label}
+                  </span>{' '}
+                  • {activeSavedRound.name || GAME_META[activeSavedRound.game].short}
                 </Text>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
                   {activeSavedRound.players.map((p) => p.name).join(', ')}
@@ -1186,7 +1197,10 @@ export default function App() {
                     <Box key={r.id} borderWidth="1px" borderRadius="12px" p={3}>
                       <Text fontWeight={700}>{label}</Text>
                       <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                        {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Icon as={GAME_BADGE_ICON[r.game] as ComponentType} boxSize={4} aria-hidden="true" />
+                          {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                        </span>
                       </Text>
                       <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
                         {r.players.map((p) => p.name).join(', ')}
@@ -1244,7 +1258,10 @@ export default function App() {
                       <Tr key={r.id}>
                         <Td>
                           <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                            {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <Icon as={GAME_BADGE_ICON[r.game] as ComponentType} boxSize={4} aria-hidden="true" />
+                              {r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins'}
+                            </span>
                           </Text>
                         </Td>
                         <Td>{r.name || (r.game === 'wolf' ? 'Wolf' : r.game === 'bbb' ? 'BBB' : 'Skins')}</Td>
@@ -1961,6 +1978,7 @@ export default function App() {
                     </HStack>
                   </Box>
                   <HStack spacing={3} align="center" flexWrap="wrap">
+                    <Icon as={GAME_META[round.game].Icon as ComponentType} boxSize={5} aria-hidden="true" />
                     <Text fontWeight={800} fontSize="lg">
                       {round.name || GAME_META[round.game].short}
                     </Text>
