@@ -385,3 +385,25 @@ a { color: inherit; }
   width: 18px;
   height: 18px;
 }
+
+@media (max-width: 47.99em) {
+  .quickRail,
+  .gridEscapeRail {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    z-index: 30;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Keep score entry clear while keyboard is active in supporting browsers. */
+  body:has(input:focus) .quickRail {
+    transform: translateY(120%);
+    pointer-events: none;
+  }
+}

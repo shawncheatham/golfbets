@@ -838,6 +838,7 @@ export default function App() {
   }, [round, quickHole])
 
   const quickThrough = round.game === 'bbb' ? bbb?.through ?? 0 : lastCompletedHole()
+  const nextIncompleteHole = nextIncompleteHoleFrom(quickHole)
 
   return (
     <Container maxW="1100px" px={{ base: 4, md: 6 }} py={{ base: 5, md: 7 }}>
@@ -1273,7 +1274,7 @@ export default function App() {
 
       {screen === 'holes' && (
         <Card variant="outline">
-          <CardBody>
+          <CardBody pb={{ base: '96px', md: 6 }}>
             <Stack spacing={4}>
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
                 <Box>
@@ -1733,6 +1734,19 @@ export default function App() {
                 </Text>
               </Box>
             )}
+
+            <Box display={{ base: 'block', md: 'none' }} className="gridEscapeRail" aria-label="Back to quick mode rail">
+              <Button
+                size="md"
+                minH="44px"
+                w="full"
+                variant="solid"
+                onClick={() => setScreen('quick')}
+                type="button"
+              >
+                Back to Quick
+              </Button>
+            </Box>
             </Stack>
           </CardBody>
         </Card>
@@ -1740,7 +1754,7 @@ export default function App() {
 
       {screen === 'quick' && (
         <Card variant="outline">
-          <CardBody>
+          <CardBody pb={{ base: '112px', md: 6 }}>
             <Stack spacing={4}>
               <HStack justify="space-between" align="flex-start" spacing={3} flexWrap="wrap">
                 <Box>
@@ -2073,7 +2087,7 @@ export default function App() {
 
           <Stack spacing={3}>
             {/* Navigation (clean, no weird wrap) */}
-            <SimpleGrid columns={3} spacing={2}>
+            <SimpleGrid columns={3} spacing={2} display={{ base: 'none', md: 'grid' }}>
               <Button
                 size="sm"
                 variant="outline"
@@ -2115,12 +2129,13 @@ export default function App() {
               size="sm"
               variant="solid"
               onClick={() => {
-                const nextHole = nextIncompleteHoleFrom(quickHole)
+                const nextHole = nextIncompleteHole
                 setQuickHole(nextHole ?? 18)
               }}
               isDisabled={!hasIncompleteHoles()}
               type="button"
               w="full"
+              display={{ base: 'none', md: 'inline-flex' }}
             >
               Next incomplete
             </Button>
@@ -2177,6 +2192,50 @@ export default function App() {
               </WrapItem>
             </Wrap>
           </Stack>
+
+          <Box display={{ base: 'block', md: 'none' }} className="quickRail" aria-label="Quick mode navigation rail">
+            <SimpleGrid columns={3} spacing={2}>
+              <Button
+                size="md"
+                minH="44px"
+                variant="outline"
+                onClick={() => setQuickHole((h) => Math.max(1, h - 1))}
+                isDisabled={quickHole <= 1}
+                type="button"
+                w="full"
+                aria-label="Previous hole"
+              >
+                Prev
+              </Button>
+              <Button
+                size="md"
+                minH="44px"
+                variant="solid"
+                onClick={() => {
+                  const nextHole = nextIncompleteHole
+                  setQuickHole(nextHole ?? 18)
+                }}
+                isDisabled={!hasIncompleteHoles()}
+                type="button"
+                w="full"
+                aria-label="Next incomplete hole"
+              >
+                Next incomplete
+              </Button>
+              <Button
+                size="md"
+                minH="44px"
+                variant="outline"
+                onClick={() => setQuickHole((h) => Math.min(18, h + 1))}
+                isDisabled={quickHole >= 18}
+                type="button"
+                w="full"
+                aria-label="Next hole"
+              >
+                Next
+              </Button>
+            </SimpleGrid>
+          </Box>
 
             </Stack>
           </CardBody>
