@@ -117,6 +117,8 @@ function GameRules({ game, defaultOpen = false }: { game: GameType; defaultOpen?
 }
 
 const THEME_KEY = 'rubislabs:golf-bets:theme:v1'
+const IOS_HINT_DISMISSED_AT_KEY = 'rubislabs:golf-bets:ios-hint:dismissed-at:v1'
+const IOS_HINT_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000
 
 function loadTheme(): Theme {
   try {
@@ -135,6 +137,29 @@ function applyTheme(theme: Theme) {
     localStorage.setItem(THEME_KEY, theme)
   } catch {
     // ignore
+  }
+}
+
+function isIOSSafari(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const touchMac = /Macintosh/i.test(ua) && typeof document !== 'undefined' && 'ontouchend' in document
+  const isIOS = /iPad|iPhone|iPod/i.test(ua) || touchMac
+  const isWebKit = /WebKit/i.test(ua)
+  const notSafari = /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)
+  return isIOS && isWebKit && !notSafari
+}
+
+function shouldShowIOSHint(): boolean {
+  if (!isIOSSafari()) return false
+  try {
+    const raw = localStorage.getItem(IOS_HINT_DISMISSED_AT_KEY)
+    if (!raw) return true
+    const ts = Number(raw)
+    if (!Number.isFinite(ts)) return true
+    return Date.now() - ts >= IOS_HINT_COOLDOWN_MS
+  } catch {
+    return true
   }
 }
 
@@ -270,6 +295,7 @@ export default function App() {
 
   // Local persistence
   const [stored, setStored] = useState(() => loadRounds())
+  const [showIOSHint, setShowIOSHint] = useState<boolean>(() => shouldShowIOSHint())
   const [round, setRound] = useState<Round>(() => {
     const st = loadRounds()
     const active = st.activeRoundId ? st.rounds.find((r) => r.id === st.activeRoundId) : undefined
@@ -310,6 +336,11 @@ export default function App() {
   }, [round, bbb])
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
+  const activeSavedRound = useMemo(() => {
+    const id = stored.activeRoundId
+    if (!id) return null
+    return stored.rounds.find((r) => r.id === id) || null
+  }, [stored])
 
   const canStart = useMemo(() => {
     if (!allPlayersHaveNames) return false
@@ -531,14 +562,23 @@ export default function App() {
     setScreen('setup')
   }
 
-  function loadExistingRound(r: Round) {
+  function loadExistingRound(r: Round, nextScreen: Screen = 'holes') {
     setRound(r)
-    setScreen('holes')
+    setScreen(nextScreen)
     setStored((prev) => {
       const next = { ...prev, activeRoundId: r.id }
       saveRounds(next)
       return next
     })
+  }
+
+  function dismissIOSHint() {
+    setShowIOSHint(false)
+    try {
+      localStorage.setItem(IOS_HINT_DISMISSED_AT_KEY, String(Date.now()))
+    } catch {
+      // ignore
+    }
   }
 
   function deleteExistingRound(id: string) {
@@ -790,6 +830,42 @@ export default function App() {
 
       {screen === 'game' && (
         <Box className="card" p={{ base: 4, md: 6 }}>
+          <Stack spacing={3} mb={4}>
+            <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+              No account. Saved on this device.
+            </Text>
+
+            {activeSavedRound && (
+              <Box borderWidth="1px" borderRadius="12px" p={3}>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                  Active round: {activeSavedRound.name || GAME_META[activeSavedRound.game].short}
+                </Text>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    track(TRACK_EVENTS.nav_screen, { from: 'game', to: 'quick', resume: true, game: activeSavedRound.game })
+                    loadExistingRound(activeSavedRound, 'quick')
+                  }}
+                >
+                  Resume active round
+                </Button>
+              </Box>
+            )}
+
+            {showIOSHint && (
+              <HStack justify="space-between" align="flex-start" spacing={3} borderWidth="1px" borderRadius="12px" p={3}>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                  On iPhone/iPad: tap Share, then Add to Home Screen (or Bookmark) for faster access.
+                </Text>
+                <Button size="sm" variant="tertiary" onClick={dismissIOSHint} type="button">
+                  Dismiss
+                </Button>
+              </HStack>
+            )}
+          </Stack>
+
           <Text fontSize="md" fontWeight={700} color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={3}>
             Choose a game
           </Text>
