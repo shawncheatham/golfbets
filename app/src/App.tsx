@@ -307,6 +307,10 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
   const [showAdvanced, setShowAdvanced] = useState(false)
   const toast = useToast()
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [holeChangeFlash, setHoleChangeFlash] = useState(false)
+  const [holeChangeHint, setHoleChangeHint] = useState(false)
+  const [holeLiveMessage, setHoleLiveMessage] = useState('')
   const { colorMode, setColorMode } = useColorMode()
 
   useEffect(() => {
@@ -407,11 +411,24 @@ export default function App() {
   const focusPlayerId = useRef<PlayerId | null>(null)
   const undoActionId = useRef(0)
   const undoRef = useRef<{ id: number; timeoutId: number; restore: () => void; toastId: string } | null>(null)
+  const holeFlashTimeoutRef = useRef<number | null>(null)
+  const holeHintTimeoutRef = useRef<number | null>(null)
+  const lastQuickHoleRef = useRef<number | null>(null)
 
   useEffect(() => {
     return () => {
       if (undoRef.current) window.clearTimeout(undoRef.current.timeoutId)
+      if (holeFlashTimeoutRef.current !== null) window.clearTimeout(holeFlashTimeoutRef.current)
+      if (holeHintTimeoutRef.current !== null) window.clearTimeout(holeHintTimeoutRef.current)
     }
+  }, [])
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const apply = () => setPrefersReducedMotion(media.matches)
+    apply()
+    media.addEventListener('change', apply)
+    return () => media.removeEventListener('change', apply)
   }, [])
 
   function addPlayer() {
@@ -980,6 +997,29 @@ export default function App() {
 
   const quickThrough = round.game === 'bbb' ? bbb?.through ?? 0 : lastCompletedHole()
   const nextIncompleteHole = nextIncompleteHoleFrom(quickHole)
+
+  useEffect(() => {
+    if (screen !== 'quick') return
+
+    const prev = lastQuickHoleRef.current
+    if (prev === null) {
+      lastQuickHoleRef.current = quickHole
+      return
+    }
+    if (prev === quickHole) return
+
+    lastQuickHoleRef.current = quickHole
+    setHoleLiveMessage(`Now editing hole ${quickHole} of 18`)
+    setHoleChangeHint(true)
+    if (holeHintTimeoutRef.current !== null) window.clearTimeout(holeHintTimeoutRef.current)
+    holeHintTimeoutRef.current = window.setTimeout(() => setHoleChangeHint(false), 1200)
+
+    if (!prefersReducedMotion) {
+      setHoleChangeFlash(true)
+      if (holeFlashTimeoutRef.current !== null) window.clearTimeout(holeFlashTimeoutRef.current)
+      holeFlashTimeoutRef.current = window.setTimeout(() => setHoleChangeFlash(false), 220)
+    }
+  }, [quickHole, screen, prefersReducedMotion])
 
   return (
     <Container maxW="1100px" px={{ base: 4, md: 6 }} py={{ base: 5, md: 7 }}>
@@ -1619,7 +1659,16 @@ export default function App() {
                       return (
                         <div key={hole} className="holeRow skins">
                           <div className="holeCell">
-                            <Button variant="tertiary" size="sm" type="button" onClick={() => { setQuickHole(hole); setScreen('quick') }}>
+                            <Button
+                              variant="tertiary"
+                              size="sm"
+                              type="button"
+                              onClick={() => {
+                                lastQuickHoleRef.current = quickHole
+                                setQuickHole(hole)
+                                setScreen('quick')
+                              }}
+                            >
                               {hole}
                             </Button>
                           </div>
@@ -1896,16 +1945,25 @@ export default function App() {
       {screen === 'quick' && (
         <Card variant="outline">
           <CardBody pb={{ base: '112px', md: 6 }}>
+            <Box className="srOnly" aria-live="polite" aria-atomic="true">
+              {holeLiveMessage}
+            </Box>
             <Stack spacing={4}>
               <HStack justify="space-between" align="flex-start" spacing={3} flexWrap="wrap">
                 <Box>
+                  <Box className={`holeContextHeader ${holeChangeFlash ? 'holeChanged' : ''}`} mb={2}>
+                    <Text fontWeight={800} fontSize={{ base: '2xl', md: 'xl' }}>
+                      Hole {quickHole} of 18
+                    </Text>
+                    <HStack spacing={2} flexWrap="wrap">
+                      <Box className="pill">Through {quickThrough}/18</Box>
+                      {holeChangeHint && <Box className="pill">Hole changed</Box>}
+                    </HStack>
+                  </Box>
                   <HStack spacing={3} align="center" flexWrap="wrap">
                     <Text fontWeight={800} fontSize="lg">
                       {round.name || GAME_META[round.game].short}
                     </Text>
-                    <Box className="pill" aria-label="Progress">
-                      Through {quickThrough}/18
-                    </Box>
                     <Button variant="tertiary" size="sm" onClick={() => setScreen('settlement')} type="button">
                       Summary →
                     </Button>
