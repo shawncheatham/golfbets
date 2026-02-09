@@ -12,6 +12,14 @@
   --btnBg: rgba(102, 227, 164, 0.15);
   --btnGhostBg: rgba(255, 255, 255, 0.03);
   --pillBg: rgba(255, 255, 255, 0.05);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --font-size-sm: 12px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
 }
 
 :root[data-theme='light'] {
@@ -44,7 +52,7 @@ a { color: inherit; }
 .container {
   max-width: 860px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .header {
@@ -61,14 +69,14 @@ a { color: inherit; }
 }
 
 .brand h1 {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   margin: 0;
   letter-spacing: 0.3px;
 }
 
 .brand span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .tagline {
@@ -86,7 +94,7 @@ a { color: inherit; }
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px;
+  padding: var(--space-4);
   backdrop-filter: blur(8px);
 }
 
@@ -112,7 +120,7 @@ a { color: inherit; }
 
 .label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   margin-bottom: 0;
 }
 
@@ -123,7 +131,7 @@ a { color: inherit; }
   border: 1px solid var(--border);
   background: var(--inputBg);
   color: var(--text);
-  font-size: 16px;
+  font-size: var(--font-size-md);
 }
 
 .btn {
@@ -220,7 +228,7 @@ a { color: inherit; }
   background: var(--pillBg);
   border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .headerRight {
@@ -256,7 +264,7 @@ a { color: inherit; }
 
 .table th { color: var(--muted); font-weight: 600; }
 
-.small { color: var(--muted); font-size: 12px; }
+.small { color: var(--muted); font-size: var(--font-size-sm); }
 
 .rulesCard {
   background: rgba(255, 255, 255, 0.03);
@@ -384,6 +392,18 @@ a { color: inherit; }
 .toggle input {
   width: 18px;
   height: 18px;
+}
+
+.undoToast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: var(--space-3);
+  backdrop-filter: blur(8px);
 }
 
 @media (max-width: 47.99em) {
