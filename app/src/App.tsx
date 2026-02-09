@@ -457,6 +457,23 @@ export default function App() {
     return 18
   }
 
+  const nextIncompleteHoleFrom = (fromHole: number): number | null => {
+    for (let h = Math.min(18, fromHole + 1); h <= 18; h++) {
+      if (!isHoleComplete(h)) return h
+    }
+    for (let h = 1; h <= Math.max(1, fromHole); h++) {
+      if (!isHoleComplete(h)) return h
+    }
+    return null
+  }
+
+  const hasIncompleteHoles = () => {
+    for (let h = 1; h <= 18; h++) {
+      if (!isHoleComplete(h)) return true
+    }
+    return false
+  }
+
   const currentHole = () => {
     const through = lastCompletedHole()
     return Math.min(18, through + 1)
@@ -743,6 +760,8 @@ export default function App() {
     if (round.game !== 'wolf') return null
     return wolfForHole(round, quickHole as HoleNumber)
   }, [round, quickHole])
+
+  const quickThrough = round.game === 'bbb' ? bbb?.through ?? 0 : lastCompletedHole()
 
   return (
     <Container maxW="1100px" px={{ base: 4, md: 6 }} py={{ base: 5, md: 7 }}>
@@ -1552,6 +1571,9 @@ export default function App() {
                     <Text fontWeight={800} fontSize="lg">
                       {round.name || GAME_META[round.game].short}
                     </Text>
+                    <Box className="pill" aria-label="Progress">
+                      Through {quickThrough}/18
+                    </Box>
                     <Button variant="tertiary" size="sm" onClick={() => setScreen('settlement')} type="button">
                       Summary →
                     </Button>
@@ -1792,6 +1814,7 @@ export default function App() {
                   <div key={p.id} className="incRow">
                     <div>
                       <div style={{ fontWeight: 800 }}>{p.name}</div>
+                      <div className="small">Preset buttons or +/-</div>
                     </div>
                     <div className="quickScore">
                       <Wrap spacing={2} aria-label={`${p.name} quick score buttons`}>
@@ -1841,10 +1864,10 @@ export default function App() {
                       variant="tertiary"
                       isDisabled={!!round.locked}
                       onClick={() => setStroke(quickHole, p.id, '')}
-                      title="Clear"
+                      title="Clear score"
                       type="button"
                     >
-                      Clear
+                      Clear score
                     </Button>
                   </div>
                 )
@@ -1894,24 +1917,12 @@ export default function App() {
 
             <Button
               size="sm"
-              variant="outline"
+              variant="solid"
               onClick={() => {
-                // Jump to next incomplete hole; if all complete, stay on 18.
-                for (let h = Math.min(18, quickHole + 1); h <= 18; h++) {
-                  if (!isHoleComplete(h)) {
-                    setQuickHole(h)
-                    return
-                  }
-                }
-                // wrap
-                for (let h = 1; h <= quickHole; h++) {
-                  if (!isHoleComplete(h)) {
-                    setQuickHole(h)
-                    return
-                  }
-                }
-                setQuickHole(18)
+                const nextHole = nextIncompleteHoleFrom(quickHole)
+                setQuickHole(nextHole ?? 18)
               }}
+              isDisabled={!hasIncompleteHoles()}
               type="button"
               w="full"
             >
