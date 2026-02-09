@@ -1724,6 +1724,20 @@ export default function App() {
                     →
                   </Button>
 
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const next = nextIncompleteHoleFrom(quickHole)
+                      if (next !== null) setQuickHole(next)
+                    }}
+                    isDisabled={nextIncompleteHoleFrom(quickHole) === null}
+                    type="button"
+                    title="Jump to next incomplete hole"
+                  >
+                    Next incomplete
+                  </Button>
+
                   <Button variant="secondary" size="sm" onClick={() => setScreen('holes')} type="button">
                     Grid
                   </Button>
@@ -1921,7 +1935,12 @@ export default function App() {
                           isDisabled={!!round.locked}
                           type="button"
                         />
-                        <Box minW="44px" textAlign="center" fontWeight={800}>
+                        <Box
+                          minW="44px"
+                          textAlign="center"
+                          fontWeight={800}
+                          color={typeof val === 'number' ? (theme === 'dark' ? 'brand.300' : 'brand.600') : undefined}
+                        >
                           {typeof val === 'number' ? val : '—'}
                         </Box>
                         <IconButton
