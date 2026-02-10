@@ -2579,23 +2579,18 @@ export default function App() {
                   </Box>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                        Settlement and sharing
-                      </Text>
-                      <Wrap spacing={2}>
-                        <WrapItem>
-                          <Button variant="secondary" size="md" onClick={copySettlement} type="button">
-                            Copy settlement
-                          </Button>
-                        </WrapItem>
-                        <WrapItem>
-                          <Button variant="secondary" size="md" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                            Share settlement
-                          </Button>
-                        </WrapItem>
-                      </Wrap>
-                    </Box>
+                    <Wrap spacing={2}>
+                      <WrapItem>
+                        <Button variant="secondary" size="md" onClick={copySettlement} type="button">
+                          Copy settlement
+                        </Button>
+                      </WrapItem>
+                      <WrapItem>
+                        <Button variant="secondary" size="md" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                          Share settlement
+                        </Button>
+                      </WrapItem>
+                    </Wrap>
 
                     <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
                       <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
@@ -2788,20 +2783,15 @@ export default function App() {
                   </Box>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                        Settlement and sharing
-                      </Text>
-                      <Wrap spacing={2}>
-                        {bbbSettlement && (
-                          <WrapItem>
-                            <Button variant="secondary" size="md" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
-                              Share settlement
-                            </Button>
-                          </WrapItem>
-                        )}
-                      </Wrap>
-                    </Box>
+                    <Wrap spacing={2}>
+                      {bbbSettlement && (
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                            Share settlement
+                          </Button>
+                        </WrapItem>
+                      )}
+                    </Wrap>
 
                     <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
                       <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
@@ -2998,20 +2988,15 @@ export default function App() {
                   </Box>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                        Settlement and sharing
-                      </Text>
-                      <Wrap spacing={2}>
-                        {wolfSettlement && (
-                          <WrapItem>
-                            <Button variant="secondary" size="md" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
-                              Share settlement
-                            </Button>
-                          </WrapItem>
-                        )}
-                      </Wrap>
-                    </Box>
+                    <Wrap spacing={2}>
+                      {wolfSettlement && (
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                            Share settlement
+                          </Button>
+                        </WrapItem>
+                      )}
+                    </Wrap>
 
                     <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
                       <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
