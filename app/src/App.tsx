@@ -2510,40 +2510,55 @@ export default function App() {
                     Skins stake: {stakeLabel(round.stakeCents || 0)} (winner collects from each opponent)
                   </Text>
                 </Box>
-
-                <Wrap spacing={2} justify="flex-end">
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
-                      Quick mode
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
-                      ← Back to holes
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="secondary" size="sm" onClick={copySettlement} type="button">
-                      Copy settlement
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="secondary" size="sm" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                      Share settlement
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                      Share status
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
-                      New game
-                    </Button>
-                  </WrapItem>
-                </Wrap>
               </HStack>
+
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Settlement and sharing
+                  </Text>
+                  <Wrap spacing={2}>
+                    <WrapItem>
+                      <Button variant="secondary" size="md" onClick={copySettlement} type="button">
+                        Copy settlement
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="secondary" size="md" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                        Share settlement
+                      </Button>
+                    </WrapItem>
+                  </Wrap>
+                </Box>
+
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Secondary actions
+                  </Text>
+                  <Wrap spacing={2}>
+                    <WrapItem>
+                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                        Share status
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                        Quick mode
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                        ← Back to holes
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                        New game
+                      </Button>
+                    </WrapItem>
+                  </Wrap>
+                </Box>
+              </SimpleGrid>
 
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <Box>
@@ -2615,18 +2630,6 @@ export default function App() {
                 <Textarea h="180px" readOnly value={settlementText()} />
               </Box>
 
-              <Wrap spacing={2} justify="flex-end">
-                <WrapItem>
-                  <Button variant="secondary" size="sm" onClick={copySettlement} type="button">
-                    Copy settlement
-                  </Button>
-                </WrapItem>
-                <WrapItem>
-                  <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
-                    Back
-                  </Button>
-                </WrapItem>
-              </Wrap>
             </Stack>
           </CardBody>
         </Card>
@@ -2680,37 +2683,52 @@ export default function App() {
                     Bingo Bango Bongo • award-entry
                   </Text>
                 </Box>
+              </HStack>
 
-                <Wrap spacing={2} justify="flex-end">
-                  <WrapItem>
-                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                      Share status
-                    </Button>
-                  </WrapItem>
-                  {bbbSettlement && (
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Settlement and sharing
+                  </Text>
+                  <Wrap spacing={2}>
+                    {bbbSettlement && (
+                      <WrapItem>
+                        <Button variant="secondary" size="md" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                          Share settlement
+                        </Button>
+                      </WrapItem>
+                    )}
+                  </Wrap>
+                </Box>
+
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Secondary actions
+                  </Text>
+                  <Wrap spacing={2}>
                     <WrapItem>
-                      <Button variant="secondary" size="sm" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
-                        Share settlement
+                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                        Share status
                       </Button>
                     </WrapItem>
-                  )}
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
-                      Quick mode
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
-                      ← Back to holes
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
-                      New game
-                    </Button>
-                  </WrapItem>
-                </Wrap>
-              </HStack>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                        Quick mode
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                        ← Back to holes
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                        New game
+                      </Button>
+                    </WrapItem>
+                  </Wrap>
+                </Box>
+              </SimpleGrid>
 
               <Box>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
@@ -2826,37 +2844,52 @@ export default function App() {
                     {wolfLabel(round.wolfPointsPerHole)} • Lone Wolf = {round.wolfLoneMultiplier || 2}x
                   </Text>
                 </Box>
+              </HStack>
 
-                <Wrap spacing={2} justify="flex-end">
-                  <WrapItem>
-                    <Button variant="secondary" size="sm" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                      Share status
-                    </Button>
-                  </WrapItem>
-                  {wolfSettlement && (
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Settlement and sharing
+                  </Text>
+                  <Wrap spacing={2}>
+                    {wolfSettlement && (
+                      <WrapItem>
+                        <Button variant="secondary" size="md" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                          Share settlement
+                        </Button>
+                      </WrapItem>
+                    )}
+                  </Wrap>
+                </Box>
+
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                    Secondary actions
+                  </Text>
+                  <Wrap spacing={2}>
                     <WrapItem>
-                      <Button variant="secondary" size="sm" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
-                        Share settlement
+                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                        Share status
                       </Button>
                     </WrapItem>
-                  )}
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('quick')} type="button">
-                      Quick mode
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={() => setScreen('holes')} type="button">
-                      ← Back to holes
-                    </Button>
-                  </WrapItem>
-                  <WrapItem>
-                    <Button variant="tertiary" size="sm" onClick={resetToGamePicker} type="button">
-                      New game
-                    </Button>
-                  </WrapItem>
-                </Wrap>
-              </HStack>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                        Quick mode
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                        ← Back to holes
+                      </Button>
+                    </WrapItem>
+                    <WrapItem>
+                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                        New game
+                      </Button>
+                    </WrapItem>
+                  </Wrap>
+                </Box>
+              </SimpleGrid>
 
               <Box>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
