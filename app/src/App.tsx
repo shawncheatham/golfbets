@@ -2623,11 +2623,20 @@ export default function App() {
                 </Box>
               </SimpleGrid>
 
-              <Box>
-                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                  Shareable text
-                </Text>
-                <Textarea h="180px" readOnly value={settlementText()} />
+              <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                <Box as="details">
+                  <Box as="summary" cursor="pointer">
+                    <Text as="span" fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                      Preview message
+                    </Text>
+                  </Box>
+                  <Box mt={3}>
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                      Edit message in your chat app after copying.
+                    </Text>
+                    <Textarea h="180px" readOnly value={settlementText()} />
+                  </Box>
+                </Box>
               </Box>
 
             </Stack>
