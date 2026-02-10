@@ -2466,38 +2466,6 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
-              <Box
-                borderWidth="1px"
-                borderRadius="lg"
-                p={4}
-                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
-                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
-              >
-                <Stack
-                  direction={{ base: 'column', md: 'row' }}
-                  align={{ base: 'stretch', md: 'center' }}
-                  justify="space-between"
-                  spacing={3}
-                >
-                  <HStack align="flex-start" spacing={3} flex="1">
-                    <Icon as={skinsPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
-                    <Box>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
-                        Result
-                      </Text>
-                      <Text fontSize="lg" fontWeight={800}>
-                        {skinsPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <Button variant="primary" onClick={shareSettlement} type="button" w={{ base: 'full', md: 'auto' }}>
-                    {skinsPaymentsRequired ? 'Settle up' : 'Share result'}
-                  </Button>
-                </Stack>
-              </Box>
-
-              <GameRules game={round.game} defaultOpen={false} />
-
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
                 <Box>
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
@@ -2512,58 +2480,10 @@ export default function App() {
                 </Box>
               </HStack>
 
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Settlement and sharing
-                  </Text>
-                  <Wrap spacing={2}>
-                    <WrapItem>
-                      <Button variant="secondary" size="md" onClick={copySettlement} type="button">
-                        Copy settlement
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="secondary" size="md" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
-                        Share settlement
-                      </Button>
-                    </WrapItem>
-                  </Wrap>
-                </Box>
-
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Secondary actions
-                  </Text>
-                  <Wrap spacing={2}>
-                    <WrapItem>
-                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                        Share status
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
-                        Quick mode
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
-                        ← Back to holes
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
-                        New game
-                      </Button>
-                    </WrapItem>
-                  </Wrap>
-                </Box>
-              </SimpleGrid>
-
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <Box>
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                    Net by player
+                    Net by Player
                   </Text>
                   <Table size="sm">
                     <Tbody>
@@ -2587,7 +2507,7 @@ export default function App() {
 
                 <Box>
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                    Money (suggested payments)
+                    Settle Up
                   </Text>
                   <Table size="sm">
                     <Thead>
@@ -2623,22 +2543,113 @@ export default function App() {
                 </Box>
               </SimpleGrid>
 
-              <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                <Box as="details">
-                  <Box as="summary" cursor="pointer">
-                    <Text as="span" fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
-                      Preview message
-                    </Text>
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Share Results
+                </Text>
+                <Stack spacing={3}>
+                  <Box
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    p={4}
+                    bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                    borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+                  >
+                    <Stack
+                      direction={{ base: 'column', md: 'row' }}
+                      align={{ base: 'stretch', md: 'center' }}
+                      justify="space-between"
+                      spacing={3}
+                    >
+                      <HStack align="flex-start" spacing={3} flex="1">
+                        <Icon as={skinsPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                        <Box>
+                          <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                            Result
+                          </Text>
+                          <Text fontSize="lg" fontWeight={800}>
+                            {skinsPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <Button variant="primary" onClick={shareSettlement} type="button" w={{ base: 'full', md: 'auto' }}>
+                        {skinsPaymentsRequired ? 'Settle up' : 'Share result'}
+                      </Button>
+                    </Stack>
                   </Box>
-                  <Box mt={3}>
-                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
-                      Edit message in your chat app after copying.
-                    </Text>
-                    <Textarea h="180px" readOnly value={settlementText()} />
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Settlement and sharing
+                      </Text>
+                      <Wrap spacing={2}>
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copySettlement} type="button">
+                            Copy settlement
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                            Share settlement
+                          </Button>
+                        </WrapItem>
+                      </Wrap>
+                    </Box>
+
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Secondary actions
+                      </Text>
+                      <Wrap spacing={2}>
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                            Share status
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                            Quick mode
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                            ← Back to holes
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                            New game
+                          </Button>
+                        </WrapItem>
+                      </Wrap>
+                    </Box>
+                  </SimpleGrid>
+                </Stack>
+              </Box>
+
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Preview Message
+                </Text>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Box as="details">
+                    <Box as="summary" cursor="pointer">
+                      <Text as="span" fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                        Preview message
+                      </Text>
+                    </Box>
+                    <Box mt={3}>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                        Edit message in your chat app after copying.
+                      </Text>
+                      <Textarea h="180px" readOnly value={settlementText()} />
+                    </Box>
                   </Box>
                 </Box>
               </Box>
 
+              <GameRules game={round.game} defaultOpen={false} />
             </Stack>
           </CardBody>
         </Card>
@@ -2648,42 +2659,10 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
-              <Box
-                borderWidth="1px"
-                borderRadius="lg"
-                p={4}
-                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
-                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
-              >
-                <Stack
-                  direction={{ base: 'column', md: 'row' }}
-                  align={{ base: 'stretch', md: 'center' }}
-                  justify="space-between"
-                  spacing={3}
-                >
-                  <HStack align="flex-start" spacing={3} flex="1">
-                    <Icon as={bbbPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
-                    <Box>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
-                        Result
-                      </Text>
-                      <Text fontSize="lg" fontWeight={800}>
-                        {bbbPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <Button variant="primary" onClick={bbbSettlement ? copyBBBSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
-                    {bbbPaymentsRequired ? 'Settle up' : 'Share result'}
-                  </Button>
-                </Stack>
-              </Box>
-
-              <GameRules game={round.game} defaultOpen={false} />
-
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
                 <Box>
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
-                    Standings
+                    Settlement
                   </Text>
                   <Text fontSize="lg" fontWeight={800}>
                     {round.name || 'BBB'}
@@ -2694,108 +2673,189 @@ export default function App() {
                 </Box>
               </HStack>
 
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Settlement and sharing
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Net by Player
                   </Text>
-                  <Wrap spacing={2}>
-                    {bbbSettlement && (
-                      <WrapItem>
-                        <Button variant="secondary" size="md" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
-                          Share settlement
-                        </Button>
-                      </WrapItem>
-                    )}
-                  </Wrap>
+                  {bbbSettlement ? (
+                    <>
+                      <Table size="sm">
+                        <Tbody>
+                          {round.players.map((p) => {
+                            const net = bbbSettlement.netByPlayer[p.id] || 0
+                            return (
+                              <Tr key={p.id}>
+                                <Td>{p.name}</Td>
+                                <Td textAlign="right" className={net >= 0 ? 'positive' : 'negative'}>
+                                  {net >= 0 ? '+' : '-'}${Math.abs(net / 100).toFixed(2)}
+                                </Td>
+                              </Tr>
+                            )
+                          })}
+                        </Tbody>
+                      </Table>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                        Positive = they should receive money. Negative = they owe.
+                      </Text>
+                    </>
+                  ) : (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      No net balances yet. Set a $/pt value to enable settlement.
+                    </Text>
+                  )}
                 </Box>
 
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Secondary actions
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Settle Up
                   </Text>
-                  <Wrap spacing={2}>
-                    <WrapItem>
-                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                        Share status
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
-                        Quick mode
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
-                        ← Back to holes
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
-                        New game
-                      </Button>
-                    </WrapItem>
-                  </Wrap>
+                  {bbbSettlement ? (
+                    <>
+                      <Table size="sm">
+                        <Thead>
+                          <Tr>
+                            <Th>From</Th>
+                            <Th>To</Th>
+                            <Th textAlign="right">Amount</Th>
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {bbbSettlement.lines.length === 0 ? (
+                            <Tr>
+                              <Td colSpan={3}>
+                                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                                  No payments needed.
+                                </Text>
+                              </Td>
+                            </Tr>
+                          ) : (
+                            bbbSettlement.lines.map((l, idx) => (
+                              <Tr key={idx}>
+                                <Td>{l.from.name}</Td>
+                                <Td>{l.to.name}</Td>
+                                <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
+                              </Tr>
+                            ))
+                          )}
+                        </Tbody>
+                      </Table>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                        Based on ${dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)} per point.
+                      </Text>
+                    </>
+                  ) : (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      No settlement payments yet. Set a $/pt value to enable settlement.
+                    </Text>
+                  )}
                 </Box>
               </SimpleGrid>
 
               <Box>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                  Points by player
+                  Share Results
                 </Text>
-                <Table size="sm">
-                  <Tbody>
-                    {round.players
-                      .slice()
-                      .sort((a, b) => (bbb.pointsByPlayer[b.id] || 0) - (bbb.pointsByPlayer[a.id] || 0))
-                      .map((p) => (
-                        <Tr key={p.id}>
-                          <Td>{p.name}</Td>
-                          <Td textAlign="right">{bbb.pointsByPlayer[p.id] || 0}</Td>
-                        </Tr>
-                      ))}
-                  </Tbody>
-                </Table>
+                <Stack spacing={3}>
+                  <Box
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    p={4}
+                    bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                    borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+                  >
+                    <Stack
+                      direction={{ base: 'column', md: 'row' }}
+                      align={{ base: 'stretch', md: 'center' }}
+                      justify="space-between"
+                      spacing={3}
+                    >
+                      <HStack align="flex-start" spacing={3} flex="1">
+                        <Icon as={bbbPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                        <Box>
+                          <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                            Result
+                          </Text>
+                          <Text fontSize="lg" fontWeight={800}>
+                            {bbbPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <Button variant="primary" onClick={bbbSettlement ? copyBBBSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
+                        {bbbPaymentsRequired ? 'Settle up' : 'Share result'}
+                      </Button>
+                    </Stack>
+                  </Box>
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Settlement and sharing
+                      </Text>
+                      <Wrap spacing={2}>
+                        {bbbSettlement && (
+                          <WrapItem>
+                            <Button variant="secondary" size="md" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                              Share settlement
+                            </Button>
+                          </WrapItem>
+                        )}
+                      </Wrap>
+                    </Box>
+
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Secondary actions
+                      </Text>
+                      <Wrap spacing={2}>
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                            Share status
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                            Quick mode
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                            ← Back to holes
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                            New game
+                          </Button>
+                        </WrapItem>
+                      </Wrap>
+                    </Box>
+                  </SimpleGrid>
+                </Stack>
               </Box>
 
-              {bbbSettlement && (
-                <Box>
-                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                    Money (suggested payments)
-                  </Text>
-                  <Table size="sm">
-                    <Thead>
-                      <Tr>
-                        <Th>From</Th>
-                        <Th>To</Th>
-                        <Th textAlign="right">Amount</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {bbbSettlement.lines.length === 0 ? (
-                        <Tr>
-                          <Td colSpan={3}>
-                            <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                              No payments needed.
-                            </Text>
-                          </Td>
-                        </Tr>
-                      ) : (
-                        bbbSettlement.lines.map((l, idx) => (
-                          <Tr key={idx}>
-                            <Td>{l.from.name}</Td>
-                            <Td>{l.to.name}</Td>
-                            <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
-                          </Tr>
-                        ))
-                      )}
-                    </Tbody>
-                  </Table>
-                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
-                    Based on ${dollarsStringFromCents(round.bbbDollarsPerPointCents || 0)} per point.
-                  </Text>
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Preview Message
+                </Text>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Box as="details">
+                    <Box as="summary" cursor="pointer">
+                      <Text as="span" fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                        Preview message
+                      </Text>
+                    </Box>
+                    <Box mt={3}>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                        Edit message in your chat app after copying.
+                      </Text>
+                      <Textarea h="180px" readOnly value={bbbSettlementText()} />
+                    </Box>
+                  </Box>
                 </Box>
-              )}
+              </Box>
+
+              <GameRules game={round.game} defaultOpen={false} />
 
               <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
                 Tip: in Quick mode, set Bingo/Bango/Bongo winners (or None) for each hole.
@@ -2809,42 +2869,10 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
-              <Box
-                borderWidth="1px"
-                borderRadius="lg"
-                p={4}
-                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
-                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
-              >
-                <Stack
-                  direction={{ base: 'column', md: 'row' }}
-                  align={{ base: 'stretch', md: 'center' }}
-                  justify="space-between"
-                  spacing={3}
-                >
-                  <HStack align="flex-start" spacing={3} flex="1">
-                    <Icon as={wolfPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
-                    <Box>
-                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
-                        Result
-                      </Text>
-                      <Text fontSize="lg" fontWeight={800}>
-                        {wolfPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <Button variant="primary" onClick={wolfSettlement ? copyWolfSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
-                    {wolfPaymentsRequired ? 'Settle up' : 'Share result'}
-                  </Button>
-                </Stack>
-              </Box>
-
-              <GameRules game={round.game} defaultOpen={false} />
-
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
                 <Box>
                   <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
-                    Standings
+                    Settlement
                   </Text>
                   <Text fontSize="lg" fontWeight={800}>
                     {round.name || 'Wolf'}
@@ -2855,108 +2883,189 @@ export default function App() {
                 </Box>
               </HStack>
 
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Settlement and sharing
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Net by Player
                   </Text>
-                  <Wrap spacing={2}>
-                    {wolfSettlement && (
-                      <WrapItem>
-                        <Button variant="secondary" size="md" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
-                          Share settlement
-                        </Button>
-                      </WrapItem>
-                    )}
-                  </Wrap>
+                  {wolfSettlement ? (
+                    <>
+                      <Table size="sm">
+                        <Tbody>
+                          {round.players.map((p) => {
+                            const net = wolfSettlement.netByPlayer[p.id] || 0
+                            return (
+                              <Tr key={p.id}>
+                                <Td>{p.name}</Td>
+                                <Td textAlign="right" className={net >= 0 ? 'positive' : 'negative'}>
+                                  {net >= 0 ? '+' : '-'}${Math.abs(net / 100).toFixed(2)}
+                                </Td>
+                              </Tr>
+                            )
+                          })}
+                        </Tbody>
+                      </Table>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                        Positive = they should receive money. Negative = they owe.
+                      </Text>
+                    </>
+                  ) : (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      No net balances yet. Set a $/pt value to enable settlement.
+                    </Text>
+                  )}
                 </Box>
 
-                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
-                  <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
-                    Secondary actions
+                <Box>
+                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                    Settle Up
                   </Text>
-                  <Wrap spacing={2}>
-                    <WrapItem>
-                      <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
-                        Share status
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
-                        Quick mode
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
-                        ← Back to holes
-                      </Button>
-                    </WrapItem>
-                    <WrapItem>
-                      <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
-                        New game
-                      </Button>
-                    </WrapItem>
-                  </Wrap>
+                  {wolfSettlement ? (
+                    <>
+                      <Table size="sm">
+                        <Thead>
+                          <Tr>
+                            <Th>From</Th>
+                            <Th>To</Th>
+                            <Th textAlign="right">Amount</Th>
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {wolfSettlement.lines.length === 0 ? (
+                            <Tr>
+                              <Td colSpan={3}>
+                                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                                  No payments needed.
+                                </Text>
+                              </Td>
+                            </Tr>
+                          ) : (
+                            wolfSettlement.lines.map((l, idx) => (
+                              <Tr key={idx}>
+                                <Td>{l.from.name}</Td>
+                                <Td>{l.to.name}</Td>
+                                <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
+                              </Tr>
+                            ))
+                          )}
+                        </Tbody>
+                      </Table>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
+                        Based on ${dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)} per point.
+                      </Text>
+                    </>
+                  ) : (
+                    <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
+                      No settlement payments yet. Set a $/pt value to enable settlement.
+                    </Text>
+                  )}
                 </Box>
               </SimpleGrid>
 
               <Box>
                 <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                  Points by player
+                  Share Results
                 </Text>
-                <Table size="sm">
-                  <Tbody>
-                    {round.players
-                      .slice()
-                      .sort((a, b) => (wolf.pointsByPlayer[b.id] || 0) - (wolf.pointsByPlayer[a.id] || 0))
-                      .map((p) => (
-                        <Tr key={p.id}>
-                          <Td>{p.name}</Td>
-                          <Td textAlign="right">{wolf.pointsByPlayer[p.id] || 0}</Td>
-                        </Tr>
-                      ))}
-                  </Tbody>
-                </Table>
+                <Stack spacing={3}>
+                  <Box
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    p={4}
+                    bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                    borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+                  >
+                    <Stack
+                      direction={{ base: 'column', md: 'row' }}
+                      align={{ base: 'stretch', md: 'center' }}
+                      justify="space-between"
+                      spacing={3}
+                    >
+                      <HStack align="flex-start" spacing={3} flex="1">
+                        <Icon as={wolfPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                        <Box>
+                          <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                            Result
+                          </Text>
+                          <Text fontSize="lg" fontWeight={800}>
+                            {wolfPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                          </Text>
+                        </Box>
+                      </HStack>
+                      <Button variant="primary" onClick={wolfSettlement ? copyWolfSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
+                        {wolfPaymentsRequired ? 'Settle up' : 'Share result'}
+                      </Button>
+                    </Stack>
+                  </Box>
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Settlement and sharing
+                      </Text>
+                      <Wrap spacing={2}>
+                        {wolfSettlement && (
+                          <WrapItem>
+                            <Button variant="secondary" size="md" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                              Share settlement
+                            </Button>
+                          </WrapItem>
+                        )}
+                      </Wrap>
+                    </Box>
+
+                    <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em" mb={2}>
+                        Secondary actions
+                      </Text>
+                      <Wrap spacing={2}>
+                        <WrapItem>
+                          <Button variant="secondary" size="md" onClick={copyStatus} type="button" title="Copy a shareable status summary">
+                            Share status
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('quick')} type="button">
+                            Quick mode
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={() => setScreen('holes')} type="button">
+                            ← Back to holes
+                          </Button>
+                        </WrapItem>
+                        <WrapItem>
+                          <Button variant="tertiary" size="md" onClick={resetToGamePicker} type="button">
+                            New game
+                          </Button>
+                        </WrapItem>
+                      </Wrap>
+                    </Box>
+                  </SimpleGrid>
+                </Stack>
               </Box>
 
-              {wolfSettlement && (
-                <Box>
-                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
-                    Money (suggested payments)
-                  </Text>
-                  <Table size="sm">
-                    <Thead>
-                      <Tr>
-                        <Th>From</Th>
-                        <Th>To</Th>
-                        <Th textAlign="right">Amount</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {wolfSettlement.lines.length === 0 ? (
-                        <Tr>
-                          <Td colSpan={3}>
-                            <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
-                              No payments needed.
-                            </Text>
-                          </Td>
-                        </Tr>
-                      ) : (
-                        wolfSettlement.lines.map((l, idx) => (
-                          <Tr key={idx}>
-                            <Td>{l.from.name}</Td>
-                            <Td>{l.to.name}</Td>
-                            <Td textAlign="right">${(l.amountCents / 100).toFixed(2)}</Td>
-                          </Tr>
-                        ))
-                      )}
-                    </Tbody>
-                  </Table>
-                  <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={2}>
-                    Based on ${dollarsStringFromCents(round.wolfDollarsPerPointCents || 0)} per point.
-                  </Text>
+              <Box>
+                <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} mb={2}>
+                  Preview Message
+                </Text>
+                <Box borderWidth="1px" borderRadius="md" p={3} borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}>
+                  <Box as="details">
+                    <Box as="summary" cursor="pointer">
+                      <Text as="span" fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800}>
+                        Preview message
+                      </Text>
+                    </Box>
+                    <Box mt={3}>
+                      <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mb={2}>
+                        Edit message in your chat app after copying.
+                      </Text>
+                      <Textarea h="180px" readOnly value={wolfSettlementText()} />
+                    </Box>
+                  </Box>
                 </Box>
-              )}
+              </Box>
+
+              <GameRules game={round.game} defaultOpen={false} />
 
               <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
                 Tip: pick Wolf partner per hole in Quick mode (or tap Lone).
