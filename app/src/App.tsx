@@ -30,7 +30,7 @@ import {
   Th,
   Td,
 } from '@chakra-ui/react'
-import { BookOpen, ChevronRight, Moon, RotateCw, Sun } from 'lucide-react'
+import { BookOpen, CheckCircle2, ChevronRight, HandCoins, Moon, RotateCw, Sun } from 'lucide-react'
 
 type Theme = 'dark' | 'light'
 import './App.css'
@@ -368,6 +368,9 @@ export default function App() {
     if (cents <= 0) return null
     return computeBBBSettlement(round.players, bbb.pointsByPlayer, cents)
   }, [round, bbb])
+  const skinsPaymentsRequired = settlement ? settlement.lines.length > 0 : false
+  const bbbPaymentsRequired = bbbSettlement ? bbbSettlement.lines.length > 0 : false
+  const wolfPaymentsRequired = wolfSettlement ? wolfSettlement.lines.length > 0 : false
 
   const allPlayersHaveNames = round.players.every((p) => p.name.trim().length > 0)
   const recentRounds = useMemo(
@@ -2463,6 +2466,36 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
+              <Box
+                borderWidth="1px"
+                borderRadius="lg"
+                p={4}
+                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+              >
+                <Stack
+                  direction={{ base: 'column', md: 'row' }}
+                  align={{ base: 'stretch', md: 'center' }}
+                  justify="space-between"
+                  spacing={3}
+                >
+                  <HStack align="flex-start" spacing={3} flex="1">
+                    <Icon as={skinsPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                    <Box>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                        Result
+                      </Text>
+                      <Text fontSize="lg" fontWeight={800}>
+                        {skinsPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <Button variant="primary" onClick={shareSettlement} type="button" w={{ base: 'full', md: 'auto' }}>
+                    {skinsPaymentsRequired ? 'Settle up' : 'Share result'}
+                  </Button>
+                </Stack>
+              </Box>
+
               <GameRules game={round.game} defaultOpen={false} />
 
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
@@ -2495,7 +2528,7 @@ export default function App() {
                     </Button>
                   </WrapItem>
                   <WrapItem>
-                    <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
+                    <Button variant="secondary" size="sm" onClick={shareSettlement} type="button" title="Copy the settlement text to paste in the group chat">
                       Share settlement
                     </Button>
                   </WrapItem>
@@ -2603,6 +2636,36 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
+              <Box
+                borderWidth="1px"
+                borderRadius="lg"
+                p={4}
+                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+              >
+                <Stack
+                  direction={{ base: 'column', md: 'row' }}
+                  align={{ base: 'stretch', md: 'center' }}
+                  justify="space-between"
+                  spacing={3}
+                >
+                  <HStack align="flex-start" spacing={3} flex="1">
+                    <Icon as={bbbPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                    <Box>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                        Result
+                      </Text>
+                      <Text fontSize="lg" fontWeight={800}>
+                        {bbbPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <Button variant="primary" onClick={bbbSettlement ? copyBBBSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
+                    {bbbPaymentsRequired ? 'Settle up' : 'Share result'}
+                  </Button>
+                </Stack>
+              </Box>
+
               <GameRules game={round.game} defaultOpen={false} />
 
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
@@ -2626,7 +2689,7 @@ export default function App() {
                   </WrapItem>
                   {bbbSettlement && (
                     <WrapItem>
-                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
+                      <Button variant="secondary" size="sm" onClick={copyBBBSettlement} type="button" title="Copy BBB settlement to paste in the group chat">
                         Share settlement
                       </Button>
                     </WrapItem>
@@ -2719,6 +2782,36 @@ export default function App() {
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
+              <Box
+                borderWidth="1px"
+                borderRadius="lg"
+                p={4}
+                bg={theme === 'dark' ? 'whiteAlpha.50' : 'blackAlpha.50'}
+                borderColor={theme === 'dark' ? 'whiteAlpha.300' : 'blackAlpha.200'}
+              >
+                <Stack
+                  direction={{ base: 'column', md: 'row' }}
+                  align={{ base: 'stretch', md: 'center' }}
+                  justify="space-between"
+                  spacing={3}
+                >
+                  <HStack align="flex-start" spacing={3} flex="1">
+                    <Icon as={wolfPaymentsRequired ? HandCoins : CheckCircle2} boxSize={5} mt={0.5} aria-hidden="true" />
+                    <Box>
+                      <Text fontSize="xs" color={theme === 'dark' ? 'gray.300' : 'gray.600'} fontWeight={800} textTransform="uppercase" letterSpacing="0.04em">
+                        Result
+                      </Text>
+                      <Text fontSize="lg" fontWeight={800}>
+                        {wolfPaymentsRequired ? 'Payments required — see who pays who below' : 'All square — No payments needed'}
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <Button variant="primary" onClick={wolfSettlement ? copyWolfSettlement : copyStatus} type="button" w={{ base: 'full', md: 'auto' }}>
+                    {wolfPaymentsRequired ? 'Settle up' : 'Share result'}
+                  </Button>
+                </Stack>
+              </Box>
+
               <GameRules game={round.game} defaultOpen={false} />
 
               <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
@@ -2742,7 +2835,7 @@ export default function App() {
                   </WrapItem>
                   {wolfSettlement && (
                     <WrapItem>
-                      <Button variant={round.locked ? 'primary' : 'secondary'} size="sm" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
+                      <Button variant="secondary" size="sm" onClick={copyWolfSettlement} type="button" title="Copy Wolf settlement to paste in the group chat">
                         Share settlement
                       </Button>
                     </WrapItem>
