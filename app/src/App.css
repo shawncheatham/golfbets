@@ -293,6 +293,17 @@ a { color: inherit; }
   overflow-x: auto;
 }
 
+.mobileHoleList {
+  margin-bottom: 6px;
+}
+
+.mobileHoleCard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .holeGrid {
   min-width: 720px;
   border: 1px solid var(--border);

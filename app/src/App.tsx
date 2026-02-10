@@ -1022,6 +1022,12 @@ export default function App() {
     }
   }, [quickHole, screen, prefersReducedMotion])
 
+  function openQuickHole(hole: number) {
+    lastQuickHoleRef.current = quickHole
+    setQuickHole(hole)
+    setScreen('quick')
+  }
+
   return (
     <Container maxW="1100px" px={{ base: 4, md: 6 }} py={{ base: 5, md: 7 }}>
       <HStack justify="space-between" align="flex-start" mb={{ base: 5, md: 7 }}>
@@ -1633,6 +1639,122 @@ export default function App() {
               </Card>
             )}
 
+            <Box display={{ base: 'block', md: 'none' }} className="mobileHoleList">
+              <Stack spacing={3}>
+                {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                  if (round.game === 'bbb') {
+                    const h = hole as HoleNumber
+                    const a = round.bbbAwardsByHole?.[h]
+                    const done = !!a && ['bingo', 'bango', 'bongo'].every((k) => k in a)
+                    const nameFor = (pid: PlayerId | null | undefined) => {
+                      if (pid === null) return 'None'
+                      if (!pid) return '—'
+                      return round.players.find((p) => p.id === pid)?.name || '—'
+                    }
+                    return (
+                      <Box key={hole} className="mobileHoleCard">
+                        <HStack justify="space-between" align="center" mb={2}>
+                          <Text fontWeight={800}>Hole {hole}</Text>
+                          <Box className="pill">{done ? 'Complete' : 'Open'}</Box>
+                        </HStack>
+                        <Stack spacing={1} mb={3}>
+                          <Text className="small">Bingo: {nameFor(a?.bingo)}</Text>
+                          <Text className="small">Bango: {nameFor(a?.bango)}</Text>
+                          <Text className="small">Bongo: {nameFor(a?.bongo)}</Text>
+                        </Stack>
+                        <Button variant="secondary" size="sm" onClick={() => openQuickHole(hole)} type="button">
+                          Edit in Quick
+                        </Button>
+                      </Box>
+                    )
+                  }
+
+                  if (round.game === 'wolf') {
+                    const wid = wolfForHole(round, hole as HoleNumber).wolfId
+                    const wolfName = round.players.find((p) => p.id === wid)?.name || 'Wolf'
+                    const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
+                    const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                    const pairingLabel = partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'
+                    const hr = (wolf?.holeResults || []).find((x) => x.hole === (hole as HoleNumber))
+                    const entered = round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length
+                    const isComplete = entered === round.players.length
+                    const centsPerPoint = round.wolfDollarsPerPointCents || 0
+                    const resultLabel = (() => {
+                      if (!hr || hr.status === 'incomplete') return '—'
+                      if (hr.status === 'tie') return 'Tie (0)'
+                      const dPts = hr.pointsDeltaByPlayer[wid] || 0
+                      const sign = dPts > 0 ? '+' : ''
+                      const money = centsPerPoint > 0 ? ` • $${((Math.abs(dPts) * centsPerPoint) / 100).toFixed(0)}` : ''
+                      const loneTag = partnerId ? '' : ' (Lone)'
+                      return `Wolf ${sign}${dPts}${loneTag}${money}`
+                    })()
+
+                    return (
+                      <Box key={hole} className="mobileHoleCard">
+                        <HStack justify="space-between" align="center" mb={2}>
+                          <Text fontWeight={800}>Hole {hole}</Text>
+                          <Box className="pill">{isComplete ? 'Complete' : `${entered}/${round.players.length} entered`}</Box>
+                        </HStack>
+                        <Stack spacing={1} mb={3}>
+                          <Text className="small">Wolf: {wolfName}</Text>
+                          <Text className="small">Pairing: {pairingLabel}</Text>
+                          <Text className="small">Result: {resultLabel}</Text>
+                        </Stack>
+                        <Wrap spacing={2} mb={3}>
+                          {round.players.map((p) => (
+                            <WrapItem key={p.id}>
+                              <Box className="pill">{p.name}: {round.strokesByHole[hole]?.[p.id] ?? '—'}</Box>
+                            </WrapItem>
+                          ))}
+                        </Wrap>
+                        <Button variant="secondary" size="sm" onClick={() => openQuickHole(hole)} type="button">
+                          Edit in Quick
+                        </Button>
+                      </Box>
+                    )
+                  }
+
+                  const hr = skins?.holeResults?.find((x) => x.hole === (hole as HoleNumber))
+                  const winnerName = hr?.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : null
+                  const isComplete = isHoleComplete(hole)
+                  const dollars = (cents: number) => (cents / 100) % 1 === 0 ? `$${(cents / 100).toFixed(0)}` : `$${(cents / 100).toFixed(2)}`
+                  const stake = round.stakeCents || 0
+                  const wonCents = hr?.wonSkins ? hr.wonSkins * stake : 0
+                  const nextCarrySkins = (hr?.carrySkins || 0) + 1
+                  const nextCarryCents = nextCarrySkins * stake
+                  const entered = round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length
+                  const label = !hr
+                    ? '—'
+                    : !isComplete
+                      ? `Incomplete (${entered}/${round.players.length})`
+                      : hr.winnerId
+                        ? `${winnerName || 'Winner'} (+${hr.wonSkins}, ${dollars(wonCents)})`
+                        : `Tie (carry → ${nextCarrySkins}, ${dollars(nextCarryCents)})`
+
+                  return (
+                    <Box key={hole} className="mobileHoleCard">
+                      <HStack justify="space-between" align="center" mb={2}>
+                        <Text fontWeight={800}>Hole {hole}</Text>
+                        <Box className="pill">{isComplete ? 'Complete' : `${entered}/${round.players.length} entered`}</Box>
+                      </HStack>
+                      <Text className="small" mb={3}>Result: {label}</Text>
+                      <Wrap spacing={2} mb={3}>
+                        {round.players.map((p) => (
+                          <WrapItem key={p.id}>
+                            <Box className="pill">{p.name}: {round.strokesByHole[hole]?.[p.id] ?? '—'}</Box>
+                          </WrapItem>
+                        ))}
+                      </Wrap>
+                      <Button variant="secondary" size="sm" onClick={() => openQuickHole(hole)} type="button">
+                        Edit in Quick
+                      </Button>
+                    </Box>
+                  )
+                })}
+              </Stack>
+            </Box>
+
+            <Box display={{ base: 'none', md: 'block' }}>
             <div className="holes">
               <div className="holeGrid" style={{ minWidth: round.game === 'wolf' ? 980 : 720 }}>
                 {round.game === 'bbb' ? (
@@ -1674,11 +1796,7 @@ export default function App() {
                               variant="tertiary"
                               size="sm"
                               type="button"
-                              onClick={() => {
-                                lastQuickHoleRef.current = quickHole
-                                setQuickHole(hole)
-                                setScreen('quick')
-                              }}
+                              onClick={() => openQuickHole(hole)}
                             >
                               {hole}
                             </Button>
@@ -1858,6 +1976,7 @@ export default function App() {
                 )}
               </div>
             </div>
+            </Box>
 
             <div style={{ height: 14 }} />
 
