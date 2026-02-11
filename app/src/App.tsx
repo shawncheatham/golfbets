@@ -44,6 +44,13 @@ import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
 import { TRACK_EVENTS, exportTrackedEvents, track } from './logic/track'
 import { BBBBadge, SkinsBadge, WolfBadge } from './assets/gameBadges'
+import { GameScreen } from './screens/GameScreen'
+import { SetupScreen } from './screens/SetupScreen'
+import { HolesScreen } from './screens/HolesScreen'
+import { QuickScreen } from './screens/QuickScreen'
+import { SettlementSkinsScreen } from './screens/SettlementSkinsScreen'
+import { SettlementBBBScreen } from './screens/SettlementBBBScreen'
+import { SettlementWolfScreen } from './screens/SettlementWolfScreen'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
@@ -1053,7 +1060,7 @@ export default function App() {
         </Button>
       </HStack>
 
-      {screen === 'game' && (
+      <GameScreen active={screen === 'game'}>
         <Box className="card" p={{ base: 4, md: 6 }}>
           <Stack spacing={3} mb={4}>
             <Text fontSize="sm" fontWeight={800} color={theme === 'dark' ? 'gray.300' : 'gray.600'}>
@@ -1308,9 +1315,9 @@ export default function App() {
             </>
           )}
         </Box>
-      )}
+      </GameScreen>
 
-      {screen === 'setup' && (
+      <SetupScreen active={screen === 'setup'}>
         <Card variant="outline">
           <CardBody>
             <Stack spacing={5}>
@@ -1468,9 +1475,9 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
-      )}
+      </SetupScreen>
 
-      {screen === 'holes' && (
+      <HolesScreen active={screen === 'holes'}>
         <Card variant="outline">
           <CardBody pb={{ base: '96px', md: 6 }}>
             <Stack spacing={4}>
@@ -2070,9 +2077,9 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
-      )}
+      </HolesScreen>
 
-      {screen === 'quick' && (
+      <QuickScreen active={screen === 'quick'}>
         <Card variant="outline">
           <CardBody pb={{ base: '112px', md: 6 }}>
             <Box className="srOnly" aria-live="polite" aria-atomic="true">
@@ -2570,9 +2577,10 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
-      )}
+      </QuickScreen>
 
-      {screen === 'settlement' && round.game === 'skins' && settlement && (
+      {settlement && (
+      <SettlementSkinsScreen active={screen === 'settlement' && round.game === 'skins'}>
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
@@ -2743,9 +2751,11 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
+      </SettlementSkinsScreen>
       )}
 
-      {screen === 'settlement' && round.game === 'bbb' && bbb && (
+      {bbb && (
+      <SettlementBBBScreen active={screen === 'settlement' && round.game === 'bbb'}>
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
@@ -2936,9 +2946,11 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
+      </SettlementBBBScreen>
       )}
 
-      {screen === 'settlement' && round.game === 'wolf' && wolf && (
+      {wolf && (
+      <SettlementWolfScreen active={screen === 'settlement' && round.game === 'wolf'}>
         <Card variant="outline">
           <CardBody>
             <Stack spacing={4}>
@@ -3129,6 +3141,7 @@ export default function App() {
             </Stack>
           </CardBody>
         </Card>
+      </SettlementWolfScreen>
       )}
     </Container>
   )
