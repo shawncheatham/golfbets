@@ -1,4 +1,4 @@
-import { type ComponentType, useEffect, useMemo, useRef, useState } from 'react'
+import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
@@ -42,7 +42,7 @@ import { computeWolf, wolfForHole, wolfLabel } from './logic/wolf'
 import { computeWolfSettlement } from './logic/wolfSettlement'
 import { computeBBBSettlement } from './logic/bbbSettlement'
 import { deleteRound, loadRounds, saveRounds, upsertRound } from './storage'
-import { TRACK_EVENTS, exportTrackedEvents, track } from './logic/track'
+import { TRACK_EVENTS, exportTrackedEvents, flushTrackedEvents, track } from './logic/track'
 import { BBBBadge, SkinsBadge, WolfBadge } from './assets/gameBadges'
 import { GameScreen } from './screens/GameScreen'
 import { SetupScreen } from './screens/SetupScreen'
@@ -146,6 +146,7 @@ function GameRules({ game, defaultOpen = false }: { game: GameType; defaultOpen?
 const THEME_KEY = 'rubislabs:golf-bets:theme:v1'
 const IOS_HINT_DISMISSED_AT_KEY = 'rubislabs:golf-bets:ios-hint:dismissed-at:v1'
 const IOS_HINT_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000
+const ROUND_SAVE_DEBOUNCE_MS = 200
 
 function loadTheme(): Theme {
   try {
@@ -358,6 +359,28 @@ export default function App() {
 
   // Avoid writing on initial mount before state settles
   const hydrated = useRef(false)
+  const roundSaveTimerRef = useRef<number | null>(null)
+  const pendingStoredRef = useRef<ReturnType<typeof loadRounds> | null>(null)
+
+  const flushPendingRoundSave = useCallback(() => {
+    if (roundSaveTimerRef.current !== null) {
+      window.clearTimeout(roundSaveTimerRef.current)
+      roundSaveTimerRef.current = null
+    }
+    if (!pendingStoredRef.current) return
+    saveRounds(pendingStoredRef.current)
+    pendingStoredRef.current = null
+  }, [])
+
+  const scheduleRoundSave = useCallback((next: ReturnType<typeof loadRounds>) => {
+    pendingStoredRef.current = next
+    if (roundSaveTimerRef.current !== null) window.clearTimeout(roundSaveTimerRef.current)
+    roundSaveTimerRef.current = window.setTimeout(() => {
+      roundSaveTimerRef.current = null
+      flushPendingRoundSave()
+    }, ROUND_SAVE_DEBOUNCE_MS)
+  }, [flushPendingRoundSave])
+
   useEffect(() => {
     if (!hydrated.current) {
       hydrated.current = true
@@ -365,10 +388,27 @@ export default function App() {
     }
     setStored((prev) => {
       const next = upsertRound(prev, round)
-      saveRounds(next)
+      scheduleRoundSave(next)
       return next
     })
-  }, [round])
+  }, [round, scheduleRoundSave])
+
+  useEffect(() => {
+    const flushOnHide = () => {
+      flushPendingRoundSave()
+      flushTrackedEvents()
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushOnHide()
+    }
+    window.addEventListener('pagehide', flushOnHide)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('pagehide', flushOnHide)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      flushOnHide()
+    }
+  }, [flushPendingRoundSave])
 
   const skins = useMemo(() => (round.game === 'skins' ? computeSkins(round) : null), [round])
   const settlement = useMemo(() => (round.game === 'skins' ? computeSettlement(round) : null), [round])
