@@ -51,6 +51,18 @@ import { QuickScreen } from './screens/QuickScreen'
 import { SettlementSkinsScreen } from './screens/SettlementSkinsScreen'
 import { SettlementBBBScreen } from './screens/SettlementBBBScreen'
 import { SettlementWolfScreen } from './screens/SettlementWolfScreen'
+import {
+  anyIncompleteHole,
+  enteredStrokeCountByHole,
+  firstIncompleteHoleFromMap,
+  holeCompletionByHole,
+  lastCompletedHoleFromMap,
+  nextIncompleteHoleFromMap,
+  playerNameMap,
+  roundIsComplete,
+  skinsResultByHoleMap,
+  wolfResultByHoleMap,
+} from './selectors/roundDerived'
 
 type Screen = 'game' | 'setup' | 'holes' | 'quick' | 'settlement'
 
@@ -375,6 +387,15 @@ export default function App() {
     if (cents <= 0) return null
     return computeBBBSettlement(round.players, bbb.pointsByPlayer, cents)
   }, [round, bbb])
+  const playerNamesById = useMemo(() => playerNameMap(round.players), [round.players])
+  const enteredByHole = useMemo(() => enteredStrokeCountByHole(round), [round])
+  const completionByHole = useMemo(() => holeCompletionByHole(round, enteredByHole), [round, enteredByHole])
+  const lastCompletedHoleValue = useMemo(() => lastCompletedHoleFromMap(completionByHole), [completionByHole])
+  const isRoundCompleteValue = useMemo(() => roundIsComplete(completionByHole), [completionByHole])
+  const firstIncompleteHoleValue = useMemo(() => firstIncompleteHoleFromMap(completionByHole), [completionByHole])
+  const hasIncompleteHolesValue = useMemo(() => anyIncompleteHole(completionByHole), [completionByHole])
+  const skinsByHole = useMemo(() => skinsResultByHoleMap(skins), [skins])
+  const wolfByHole = useMemo(() => wolfResultByHoleMap(wolf), [wolf])
   const skinsPaymentsRequired = settlement ? settlement.lines.length > 0 : false
   const bbbPaymentsRequired = bbbSettlement ? bbbSettlement.lines.length > 0 : false
   const wolfPaymentsRequired = wolfSettlement ? wolfSettlement.lines.length > 0 : false
@@ -417,6 +438,16 @@ export default function App() {
     const pts = round.wolfPointsPerHole || 0
     return round.players.length === 4 && pts > 0
   }, [allPlayersHaveNames, round])
+
+  function playerNameOrDash(pid: PlayerId | null | undefined): string {
+    if (!pid) return '—'
+    return playerNamesById[pid] || '—'
+  }
+
+  function playerNameOrNone(pid: PlayerId | null | undefined): string {
+    if (pid === null) return 'None'
+    return playerNameOrDash(pid)
+  }
 
   function updatePlayer(id: PlayerId, patch: Partial<Player>) {
     setRound((r) => ({
@@ -492,7 +523,7 @@ export default function App() {
     if (n !== null) {
       const extreme = n <= 1 || n >= 15
       if (extreme) {
-        const who = round.players.find((p) => p.id === playerId)?.name || 'Player'
+        const who = playerNamesById[playerId] || 'Player'
         if (!confirm(`Set ${who} to ${n} on hole ${hole}?`)) return
       }
     }
@@ -506,7 +537,7 @@ export default function App() {
         const anyEntered = round.players.some((p) => typeof existing[p.id] === 'number')
         if (!anyEntered) {
           const wolfId = wolfForHole(round, hole as HoleNumber).wolfId
-          const wolfName = round.players.find((p) => p.id === wolfId)?.name || 'Wolf'
+          const wolfName = playerNamesById[wolfId] || 'Wolf'
           if (!confirm(`No partner selected for hole ${hole}. Confirm ${wolfName} is playing Lone Wolf?`)) return
         }
       }
@@ -551,42 +582,25 @@ export default function App() {
 
   // Quick-entry mode
   const [quickHole, setQuickHole] = useState<number>(1)
+  const nextIncompleteHole = useMemo(
+    () => nextIncompleteHoleFromMap(quickHole, completionByHole),
+    [quickHole, completionByHole],
+  )
 
   const isHoleComplete = (h: number) => {
-    if (round.game === 'bbb') {
-      // Consider a BBB hole “complete” if all 3 awards are assigned (or explicitly None).
-      const a = round.bbbAwardsByHole?.[h as HoleNumber]
-      if (!a) return false
-      // Presence of record isn’t enough; require explicit values (null is allowed).
-      return ['bingo', 'bango', 'bongo'].every((k) => k in a)
-    }
-
-    const by = round.strokesByHole[h]
-    return round.players.every((p) => typeof by?.[p.id] === 'number')
+    return !!completionByHole[h as HoleNumber]
   }
 
   const firstIncompleteHole = () => {
-    for (let h = 1; h <= 18; h++) {
-      if (!isHoleComplete(h)) return h
-    }
-    return 18
+    return firstIncompleteHoleValue
   }
 
   const nextIncompleteHoleFrom = (fromHole: number): number | null => {
-    for (let h = Math.min(18, fromHole + 1); h <= 18; h++) {
-      if (!isHoleComplete(h)) return h
-    }
-    for (let h = 1; h <= Math.max(1, fromHole); h++) {
-      if (!isHoleComplete(h)) return h
-    }
-    return null
+    return nextIncompleteHoleFromMap(fromHole, completionByHole)
   }
 
   const hasIncompleteHoles = () => {
-    for (let h = 1; h <= 18; h++) {
-      if (!isHoleComplete(h)) return true
-    }
-    return false
+    return hasIncompleteHolesValue
   }
 
   const currentHole = () => {
@@ -686,7 +700,7 @@ export default function App() {
       }
     })
     if (typeof previousValue !== 'number') return
-    const playerName = round.players.find((p) => p.id === playerId)?.name || 'Player'
+    const playerName = playerNamesById[playerId] || 'Player'
     registerUndo({
       label: `Cleared ${playerName} on hole ${hole}`,
       restore: () =>
@@ -802,10 +816,7 @@ export default function App() {
   }
 
   function lastCompletedHole(): number {
-    for (let h = 18; h >= 1; h--) {
-      if (isHoleComplete(h)) return h
-    }
-    return 0
+    return lastCompletedHoleValue
   }
 
   function settlementText(): string {
@@ -942,10 +953,7 @@ export default function App() {
   }
 
   function isRoundComplete(): boolean {
-    for (let h = 1; h <= 18; h++) {
-      if (!isHoleComplete(h)) return false
-    }
-    return true
+    return isRoundCompleteValue
   }
 
   function lockRound(andGoToSettlement = false) {
@@ -1004,7 +1012,6 @@ export default function App() {
   }, [round, quickHole])
 
   const quickThrough = round.game === 'bbb' ? bbb?.through ?? 0 : lastCompletedHole()
-  const nextIncompleteHole = nextIncompleteHoleFrom(quickHole)
 
   useEffect(() => {
     if (screen !== 'quick') return
@@ -1653,11 +1660,7 @@ export default function App() {
                     const h = hole as HoleNumber
                     const a = round.bbbAwardsByHole?.[h]
                     const done = !!a && ['bingo', 'bango', 'bongo'].every((k) => k in a)
-                    const nameFor = (pid: PlayerId | null | undefined) => {
-                      if (pid === null) return 'None'
-                      if (!pid) return '—'
-                      return round.players.find((p) => p.id === pid)?.name || '—'
-                    }
+                    const nameFor = (pid: PlayerId | null | undefined) => playerNameOrNone(pid)
                     return (
                       <Box key={hole} className="mobileHoleCard">
                         <HStack justify="space-between" align="center" mb={2}>
@@ -1678,12 +1681,12 @@ export default function App() {
 
                   if (round.game === 'wolf') {
                     const wid = wolfForHole(round, hole as HoleNumber).wolfId
-                    const wolfName = round.players.find((p) => p.id === wid)?.name || 'Wolf'
+                    const wolfName = playerNameOrDash(wid)
                     const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
-                    const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                    const partnerName = partnerId ? playerNameOrDash(partnerId) : null
                     const pairingLabel = partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'
-                    const hr = (wolf?.holeResults || []).find((x) => x.hole === (hole as HoleNumber))
-                    const entered = round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length
+                    const hr = wolfByHole[hole as HoleNumber]
+                    const entered = enteredByHole[hole as HoleNumber]
                     const isComplete = entered === round.players.length
                     const centsPerPoint = round.wolfDollarsPerPointCents || 0
                     const resultLabel = (() => {
@@ -1721,15 +1724,15 @@ export default function App() {
                     )
                   }
 
-                  const hr = skins?.holeResults?.find((x) => x.hole === (hole as HoleNumber))
-                  const winnerName = hr?.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : null
+                  const hr = skinsByHole[hole as HoleNumber]
+                  const winnerName = hr?.winnerId ? playerNameOrDash(hr.winnerId) : null
                   const isComplete = isHoleComplete(hole)
                   const dollars = (cents: number) => (cents / 100) % 1 === 0 ? `$${(cents / 100).toFixed(0)}` : `$${(cents / 100).toFixed(2)}`
                   const stake = round.stakeCents || 0
                   const wonCents = hr?.wonSkins ? hr.wonSkins * stake : 0
                   const nextCarrySkins = (hr?.carrySkins || 0) + 1
                   const nextCarryCents = nextCarrySkins * stake
-                  const entered = round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length
+                  const entered = enteredByHole[hole as HoleNumber]
                   const label = !hr
                     ? '—'
                     : !isComplete
@@ -1788,11 +1791,7 @@ export default function App() {
                       const h = hole as HoleNumber
                       const a = round.bbbAwardsByHole?.[h]
 
-                      const nameFor = (pid: PlayerId | null | undefined) => {
-                        if (pid === null) return 'None'
-                        if (!pid) return '—'
-                        return round.players.find((p) => p.id === pid)?.name || '—'
-                      }
+                      const nameFor = (pid: PlayerId | null | undefined) => playerNameOrNone(pid)
 
                       const done = !!a && ['bingo', 'bango', 'bongo'].every((k) => k in a)
 
@@ -1842,12 +1841,12 @@ export default function App() {
 
                     {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
                       const wid = wolfForHole(round, hole as HoleNumber).wolfId
-                      const wolfName = round.players.find((p) => p.id === wid)?.name || 'Wolf'
+                      const wolfName = playerNameOrDash(wid)
                       const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
-                      const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                      const partnerName = partnerId ? playerNameOrDash(partnerId) : null
                       const pairingLabel = partnerName ? `Wolf + ${partnerName}` : 'Lone Wolf'
 
-                      const hr = (wolf?.holeResults || []).find((x) => x.hole === (hole as HoleNumber))
+                      const hr = wolfByHole[hole as HoleNumber]
                       const centsPerPoint = round.wolfDollarsPerPointCents || 0
 
                       const resultLabel = (() => {
@@ -1924,8 +1923,8 @@ export default function App() {
                     </div>
 
                     {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
-                      const hr = skins?.holeResults?.find((x) => x.hole === (hole as HoleNumber))
-                      const winnerName = hr?.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : null
+                      const hr = skinsByHole[hole as HoleNumber]
+                      const winnerName = hr?.winnerId ? playerNameOrDash(hr.winnerId) : null
                       const isComplete = isHoleComplete(hole)
                       const dollars = (cents: number) => (cents / 100) % 1 === 0 ? `$${(cents / 100).toFixed(0)}` : `$${(cents / 100).toFixed(2)}`
                       const stake = round.stakeCents || 0
@@ -1936,7 +1935,7 @@ export default function App() {
                       const label = !hr
                         ? '—'
                         : !isComplete
-                          ? `incomplete (${round.players.filter((p) => typeof round.strokesByHole[hole]?.[p.id] === 'number').length}/${round.players.length})`
+                          ? `incomplete (${enteredByHole[hole as HoleNumber]}/${round.players.length})`
                           : hr.winnerId
                             ? `${winnerName || 'Winner'} (+${hr.wonSkins}, ${dollars(wonCents)})`
                             : `tie (carry → ${nextCarrySkins}, ${dollars(nextCarryCents)})`
@@ -2019,7 +2018,7 @@ export default function App() {
                     </Thead>
                     <Tbody>
                       {skins.holeResults.map((hr) => {
-                        const winner = hr.winnerId ? round.players.find((p) => p.id === hr.winnerId)?.name : '—'
+                        const winner = hr.winnerId ? playerNameOrDash(hr.winnerId) : '—'
                         const label = hr.winnerId ? winner : `tie (carry)`
                         return (
                           <Tr key={hr.hole}>
@@ -2128,9 +2127,9 @@ export default function App() {
                   {round.game === 'wolf' && wolfHole && (
                     <Text fontSize="sm" color={theme === 'dark' ? 'gray.300' : 'gray.600'} mt={1}>
                       {(() => {
-                        const wolfName = round.players.find((p) => p.id === wolfHole.wolfId)?.name || 'Wolf'
+                        const wolfName = playerNameOrDash(wolfHole.wolfId)
                         const partnerId = (round.wolfPartnerByHole?.[quickHole as HoleNumber] ?? null) as PlayerId | null
-                        const partnerName = partnerId ? round.players.find((p) => p.id === partnerId)?.name : null
+                        const partnerName = partnerId ? playerNameOrDash(partnerId) : null
                         const otherNames = round.players
                           .filter((p) => p.id !== wolfHole.wolfId && p.id !== partnerId)
                           .map((p) => p.name)
@@ -2202,10 +2201,10 @@ export default function App() {
                 <div className="card" style={{ padding: 12, marginTop: 12, marginBottom: 12 }}>
                   <div className="label">Hole story</div>
                     {(() => {
-                      const hr = skins.holeResults.find((x) => x.hole === (quickHole as HoleNumber))
+                      const hr = skinsByHole[quickHole as HoleNumber]
                       if (!hr) return <div className="small">No data for this hole yet.</div>
                       
-                      const entered = round.players.filter((p) => typeof round.strokesByHole[quickHole]?.[p.id] === 'number').length
+                      const entered = enteredByHole[quickHole as HoleNumber]
                       const total = round.players.length
                       
                       if (entered < total) {
@@ -2218,7 +2217,7 @@ export default function App() {
                       }
                       
                       if (hr.winnerId) {
-                      const winner = round.players.find((p) => p.id === hr.winnerId)?.name || 'Winner'
+                      const winner = playerNamesById[hr.winnerId] || 'Winner'
                       const wonCents = hr.wonSkins * (round.stakeCents || 0)
                       return (
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
