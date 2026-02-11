@@ -1,5 +1,6 @@
 import type { Player, PlayerId, Round } from '../types';
 import { computeSkins } from './skins';
+import { settlementLinesFromNet } from './settlementMatcher';
 
 export type SettlementLine = {
   from: Player;
@@ -11,10 +12,6 @@ export type Settlement = {
   netByPlayer: Record<PlayerId, number>; // + is owed to them; - they owe
   lines: SettlementLine[];
 };
-
-function cloneNet(players: Player[], netById: Record<PlayerId, number>) {
-  return players.map((p) => ({ p, net: netById[p.id] || 0 }));
-}
 
 export function computeSettlement(round: Round): Settlement {
   const skins = computeSkins(round);
@@ -52,31 +49,7 @@ export function computeSettlement(round: Round): Settlement {
     }
   }
 
-  // Compute suggested settlement lines: greedy match debtors to creditors.
-  const creditors = cloneNet(round.players, net2)
-    .filter((x) => x.net > 0)
-    .sort((a, b) => b.net - a.net);
-  const debtors = cloneNet(round.players, net2)
-    .filter((x) => x.net < 0)
-    .sort((a, b) => a.net - b.net);
-
-  const lines: SettlementLine[] = [];
-  let i = 0,
-    j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const d = debtors[i];
-    const c = creditors[j];
-
-    const pay = Math.min(-d.net, c.net);
-    if (pay > 0) {
-      lines.push({ from: d.p, to: c.p, amountCents: pay });
-      d.net += pay;
-      c.net -= pay;
-    }
-
-    if (d.net === 0) i++;
-    if (c.net === 0) j++;
-  }
+  const lines = settlementLinesFromNet(round.players, net2) as SettlementLine[];
 
   return { netByPlayer: net2, lines };
 }
