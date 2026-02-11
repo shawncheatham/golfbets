@@ -1,55 +1,76 @@
-# Testing (Discovery + Engineering)
+# Testing
 
-This project uses the RubisLabs **Ship-Fast Testing Playbook**.
+GolfBets is currently Stage 2 (Prototype), moving toward Stage 3 (Pilot).
 
-## Current stage
-**2 (Prototype)** → moving toward **3 (Pilot)**
+## PR train quality gates (required every PR)
+- `npm run -s lint` passes from `app/`
+- `npm run -s build` passes from `app/`
+- Manual parity smoke passes for Skins, Wolf, and BBB
+- No intentional UX behavior or copy changes unless called out in PR
 
-## Stage checklist
+## Baseline metrics (captured 2026-02-11)
+Run from `app/`:
 
-### Stage 0–1: Discovery testing
-- [ ] 5–10 user conversations (problem-first)
-- [ ] Task narrative: walk through the last time the problem occurred
-- [ ] Fake-door or concierge test where possible
-- [ ] Define success metric + kill criteria
-- [ ] Record learnings in `docs/DECISIONS.md`
+```bash
+npm run -s build
+```
 
-### Stage 2: Prototype testing (minimum bar)
-- [ ] Manual smoke checklist (≤10 min)
-- [ ] One golden-path automated check
-- [ ] Basic error logging
-- [ ] Top 3 failure modes documented + handled
+Baseline output (production build):
+- `dist/assets/index-Dus64PJ7.css` gzip: `2.06 kB`
+- `dist/assets/react-Ie-exLm1.js` gzip: `3.36 kB`
+- `dist/assets/vendor-B-FxQ79v.js` gzip: `14.09 kB`
+- `dist/assets/index-CghpK5Ap.js` gzip: `17.15 kB`
+- `dist/assets/react-dom-2Vj6VfxD.js` gzip: `56.20 kB`
+- `dist/assets/ui-BNr8K6kz.js` gzip: `81.11 kB`
 
-### Stage 3: Pilot testing
-- [ ] Regression suite for top 10 flows
-- [ ] Contract tests for integrations
-- [ ] Dashboards/alerts for key failures
+Initial JS gzip baseline for budget tracking:
+- `171.91 kB` (sum of JS gzip chunks above)
 
-### Stage 4: Production-ish
-- [ ] CI gates: lint + unit + integration + e2e smoke
-- [ ] Rollback/feature flag plan
-- [ ] SLOs defined and monitored
+For PR-6 budget checks:
+- Pass threshold = no more than `+5%` initial JS gzip vs `171.91 kB`
+- Upper bound = `180.51 kB`
 
----
+## Manual parity smoke (required every PR)
 
-## UI polish checklist (quick)
-Run this anytime we change styling/components.
+### Skins flow
+1. Start a new Skins round with 2+ players.
+2. Enter holes 1-3 in Quick mode.
+3. Confirm carry/leader updates are coherent.
+4. Lock round, then unlock round.
+5. Use Share status and Share settlement.
+6. Refresh page and confirm round resumes from Recent/Active.
 
-- [ ] Contrast: text is readable in **light + dark** (no low-contrast gray-on-gray)
-- [ ] Colorblind-safe: meaning is not conveyed by color alone (icons/text patterns present)
-- [ ] Focus states: keyboard focus ring is visible on buttons/inputs (Tab through)
-- [ ] Tap targets: key controls are comfortably tappable on phone (no tiny chips)
-- [ ] Button hierarchy: one clear primary action per screen; secondary actions are visually quieter
-- [ ] Inputs: consistent height/radius; placeholder legible; error/confirm prompts don’t feel jarring
-- [ ] Motion: subtle transitions only (150–200ms); respects reduced motion
-- [ ] Icon consistency: single icon set (Lucide); consistent stroke weight/size
+### Wolf flow
+1. Start a new Wolf round (4 players).
+2. Enter scores for holes 1-3.
+3. For at least one hole, set partner; for one hole, set Lone.
+4. Confirm standings update after score entry.
+5. If $/pt is set, confirm settlement view and Share settlement.
+6. Refresh page and confirm persistence.
 
----
+### BBB flow
+1. Start a new BBB round.
+2. In Quick mode, set Bingo/Bango/Bongo awards for holes 1-3.
+3. Confirm through-hole and points leaderboard updates.
+4. If $/pt is set, confirm settlement lines render.
+5. Use Share status (and Share settlement when enabled).
+6. Refresh page and confirm persistence.
 
-## Manual smoke checklist (edit per project)
-1) Create a Skins round, enter holes 1–3 in Quick mode
-2) Share status, then share settlement after locking
-3) Repeat in dark mode
+## Smoke result logging format (copy into PR body)
 
-## Regression rules
-- Any bug that matters must produce a regression test.
+```md
+Manual parity smoke results
+- Skins: PASS/FAIL - notes
+- Wolf: PASS/FAIL - notes
+- BBB: PASS/FAIL - notes
+```
+
+## UI polish checks (quick)
+- Contrast works in light and dark themes.
+- Focus ring is visible on interactive controls.
+- Color is not the only signal for state/result.
+- Tap targets remain comfortable on mobile.
+- Primary action hierarchy remains clear per screen.
+
+## Regression rule
+Any user-impacting bug fixed in this repo should add a reproducible test note (manual or automated) to prevent reintroduction.
