@@ -31,6 +31,10 @@ export type TrackExport = {
 
 const KEY = 'rubislabs:golf-bets:track:v1'
 const MAX = 500
+const WRITE_DEBOUNCE_MS = 150
+
+let memEvents: TrackEvent[] | null = null
+let writeTimer: number | null = null
 
 function safeParse(raw: string | null): TrackEvent[] {
   if (!raw) return []
@@ -48,6 +52,25 @@ function safeParse(raw: string | null): TrackEvent[] {
   }
 }
 
+function ensureLoaded(): TrackEvent[] {
+  if (memEvents) return memEvents
+  memEvents = safeParse(localStorage.getItem(KEY))
+  return memEvents
+}
+
+function saveToStorage(events: TrackEvent[]) {
+  const next = events.length > MAX ? events.slice(events.length - MAX) : events
+  localStorage.setItem(KEY, JSON.stringify(next))
+}
+
+function scheduleWrite() {
+  if (writeTimer !== null) return
+  writeTimer = window.setTimeout(() => {
+    writeTimer = null
+    flushTrackedEvents()
+  }, WRITE_DEBOUNCE_MS)
+}
+
 export function track(name: TrackEventName, props?: Record<string, unknown>) {
   const ev: TrackEvent = { ts: Date.now(), name, props }
 
@@ -59,10 +82,9 @@ export function track(name: TrackEventName, props?: Record<string, unknown>) {
   }
 
   try {
-    const cur = safeParse(localStorage.getItem(KEY))
-    cur.push(ev)
-    const next = cur.length > MAX ? cur.slice(cur.length - MAX) : cur
-    localStorage.setItem(KEY, JSON.stringify(next))
+    const events = ensureLoaded()
+    events.push(ev)
+    scheduleWrite()
   } catch {
     // ignore (private mode / quota)
   }
@@ -70,7 +92,7 @@ export function track(name: TrackEventName, props?: Record<string, unknown>) {
 
 export function getTrackedEvents(): TrackEvent[] {
   try {
-    return safeParse(localStorage.getItem(KEY))
+    return ensureLoaded().slice()
   } catch {
     return []
   }
@@ -103,8 +125,27 @@ export function exportTrackedEvents(): TrackExport {
 }
 
 export function clearTrackedEvents() {
+  if (writeTimer !== null) {
+    window.clearTimeout(writeTimer)
+    writeTimer = null
+  }
+  memEvents = []
   try {
     localStorage.removeItem(KEY)
+  } catch {
+    // ignore
+  }
+}
+
+export function flushTrackedEvents() {
+  if (writeTimer !== null) {
+    window.clearTimeout(writeTimer)
+    writeTimer = null
+  }
+
+  try {
+    const events = ensureLoaded()
+    saveToStorage(events)
   } catch {
     // ignore
   }
