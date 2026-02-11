@@ -52,6 +52,7 @@ import { SettlementSkinsScreen } from './screens/SettlementSkinsScreen'
 import { SettlementBBBScreen } from './screens/SettlementBBBScreen'
 import { SettlementWolfScreen } from './screens/SettlementWolfScreen'
 import {
+  HOLES_18,
   anyIncompleteHole,
   enteredStrokeCountByHole,
   firstIncompleteHoleFromMap,
@@ -1695,7 +1696,7 @@ export default function App() {
 
             <Box display={{ base: 'block', md: 'none' }} className="mobileHoleList">
               <Stack spacing={3}>
-                {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                {HOLES_18.map((hole) => {
                   if (round.game === 'bbb') {
                     const h = hole as HoleNumber
                     const a = round.bbbAwardsByHole?.[h]
@@ -1827,7 +1828,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                    {HOLES_18.map((hole) => {
                       const h = hole as HoleNumber
                       const a = round.bbbAwardsByHole?.[h]
 
@@ -1879,7 +1880,7 @@ export default function App() {
                       ))}
                     </div>
 
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                    {HOLES_18.map((hole) => {
                       const wid = wolfForHole(round, hole as HoleNumber).wolfId
                       const wolfName = playerNameOrDash(wid)
                       const partnerId = (round.wolfPartnerByHole?.[hole as HoleNumber] ?? null) as PlayerId | null
@@ -1962,7 +1963,7 @@ export default function App() {
                       ))}
                     </div>
 
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((hole) => {
+                    {HOLES_18.map((hole) => {
                       const hr = skinsByHole[hole as HoleNumber]
                       const winnerName = hr?.winnerId ? playerNameOrDash(hr.winnerId) : null
                       const isComplete = isHoleComplete(hole)
