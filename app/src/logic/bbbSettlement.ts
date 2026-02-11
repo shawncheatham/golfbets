@@ -1,9 +1,6 @@
 import type { Player, PlayerId } from '../types'
 import type { Settlement, SettlementLine } from './wolfSettlement'
-
-function cloneNet(players: Player[], netById: Record<PlayerId, number>) {
-  return players.map((p) => ({ p, net: netById[p.id] || 0 }))
-}
+import { settlementLinesFromNet } from './settlementMatcher'
 
 // BBB points are non-negative, so we need a zero-sum money model.
 // Model (v1): each BBB point is worth $/pt paid by *each opponent*.
@@ -21,30 +18,7 @@ export function computeBBBSettlement(players: Player[], pointsByPlayer: Record<P
     netByPlayer[p.id] = (pts * N - totalPoints) * dollarsPerPointCents
   }
 
-  const creditors = cloneNet(players, netByPlayer)
-    .filter((x) => x.net > 0)
-    .sort((a, b) => b.net - a.net)
-  const debtors = cloneNet(players, netByPlayer)
-    .filter((x) => x.net < 0)
-    .sort((a, b) => a.net - b.net)
-
-  const lines: SettlementLine[] = []
-  let i = 0,
-    j = 0
-  while (i < debtors.length && j < creditors.length) {
-    const d = debtors[i]
-    const c = creditors[j]
-
-    const pay = Math.min(-d.net, c.net)
-    if (pay > 0) {
-      lines.push({ from: d.p, to: c.p, amountCents: pay })
-      d.net += pay
-      c.net -= pay
-    }
-
-    if (d.net === 0) i++
-    if (c.net === 0) j++
-  }
+  const lines = settlementLinesFromNet(players, netByPlayer) as SettlementLine[]
 
   return { netByPlayer, lines }
 }
